@@ -13,7 +13,6 @@
 void c6_exception(int);
 int main(int argc,char **argv)
 {
-    //s1
     int sock;
     int c2=0,c3=0,c4=0,c5=0;
     int result=0;
@@ -55,47 +54,45 @@ int main(int argc,char **argv)
     if(c2==1){
         //s2
         memset(buf, '\0', sizeof(buf));
-            if ( ( read(sock,buf,sizeof(buf)) ) < 0) {
-                perror("read");
+        if ( ( read(sock,buf,sizeof(buf)) ) < 0) {
+            perror("read");
+        }
+        else {
+            printf("receive: %s\n",buf);
+            
+            if( !strncmp( "REQUEST ACCEPTED\n", buf, strlen("REQUEST ACCEPTED\n"))){
+                c3=1;
             }
-            else {
-                printf("receive: %s\n",buf);
-                
-                if( !strncmp( "REQUEST ACCEPTED\n", buf, strlen("REQUEST ACCEPTED\n"))){
-                //    printf("REQUEST ACCEPTED\n");
-                    c3=1;
-                }
-                //  もしメッセージが接続受理 ("REQUEST ACCEPTED\n") ならば状態 c3 へ
-                else c6_exception(sock);
-                //さもなければ (接続拒否または何らかの例外) 状態 c6 へ移る.
-            }
+            //  もしメッセージが接続受理 ("REQUEST ACCEPTED\n") ならば状態 c3 へ
+            else c6_exception(sock);
+            //さもなければ (接続拒否または何らかの例外) 状態 c6 へ移る.
+        }
         
         
     }
     
     //c3
     if (c3==1){
-        if(write(sock, argv[2], /*sizeof*/strlen(argv[2]))==-1){
+        if(write(sock, argv[2], strlen(argv[2]))==-1){
             perror("writeforsend\n");
             exit(1);
         }
         
         memset(buf, '\0', sizeof(buf));
         
-            if ( ( read(sock,buf,sizeof(buf)) ) < 0) {
-                perror("read");
+        if ( ( read(sock,buf,sizeof(buf)) ) < 0) {
+            perror("read");
+        }
+        else {
+            printf("receive: %s\n",buf);
+            
+            if( !strncmp( "USERNAME REGISTERED\n", buf, strlen("REQUEST ACCEPTED\n"))) {
+                c4=1;
             }
-            else {
-                printf("receive: %s\n",buf);
-                
-                if( !strncmp( "USERNAME REGISTERED\n", buf, strlen("REQUEST ACCEPTED\n"))) {
-                 //   printf("USERNAME REGISTERED\n");
-                    c4=1;
-                }
-                //  もしメッセージが接続受理 ("USERNAME REGISTERED\n") ならば状態 c4 へ
-                else c6_exception(sock);
-                //さもなければ (接続拒否または何らかの例外) 状態 c6 へ移る.
-            }
+            //  もしメッセージが接続受理 ("USERNAME REGISTERED\n") ならば状態 c4 へ
+            else c6_exception(sock);
+            //さもなければ (接続拒否または何らかの例外) 状態 c6 へ移る.
+        }
     }
     
     
@@ -104,7 +101,7 @@ int main(int argc,char **argv)
     if (c4==1){
         int i=1;
         do {
-         
+            
             FD_ZERO(&rfds);
             FD_SET(0,&rfds);
             FD_SET(sock,&rfds);
@@ -114,7 +111,7 @@ int main(int argc,char **argv)
             if(select(sock+1,&rfds,NULL,NULL,&tv)>0 ){
                 
                 if(FD_ISSET(sock,&rfds)){
-                   
+                    
                     size_t readlen=read(sock,buf,sizeof(buf));
                     if ( readlen < 0) {
                         perror("read");
@@ -126,20 +123,11 @@ int main(int argc,char **argv)
                     }
                     else {
                         size_t length=strlen(buf);
-                         if (length > 0 && buf[length - 1] == '\n') {
-                             buf[--length] = '\0';
-                         }
+                        if (length > 0 && buf[length - 1] == '\n') {
+                            buf[--length] = '\0';
+                        }
                         printf("%s",buf);
-                        if(i==1)  {
-                            printf("==>");
-                            i++;
-                        }
-                        else if(i==2){
-                            printf("\n");
-                            i=1;
-                        }
-                        
-                        
+                        printf("\n");
                     }
                 }
                 

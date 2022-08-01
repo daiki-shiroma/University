@@ -17,7 +17,7 @@ char rbuf[MAXCLIENTS+1][1024];
 char user_name_list[MAXCLIENTS+1][1024];
 int k=0;
 int connect_check(int);
-pthread_t handle[MAXCLIENTS];
+pthread_t handle[MAXCLIENTS];  // Thread handle.
 int flag1=0;
 int flag2=0;
 int flag3=0;
@@ -27,7 +27,9 @@ pthread_mutex_t mutex;
 
 void *client_socket(void *arg) {
     int client_number;
-    
+    char temp[99]; //add
+    char yajirushi[]="==>"; //add
+    char fin_message[]="connection ended\n";
     if (flag1!=1) {
         flag1=1;
         client_number=1;
@@ -58,10 +60,10 @@ void *client_socket(void *arg) {
         FD_SET(csock[client_number],&rfds);
         tv.tv_sec = 1;
         tv.tv_usec = 0;
-        if(select(csock[client_number]+1,&rfds,NULL,NULL,&tv)>0 ){
+        if(select(csock[client_number]+1,&rfds,NULL,NULL,&tv)>0 ){ //s6
             
             memset(rbuf[client_number], '\0', sizeof(rbuf[client_number]));
-            if(FD_ISSET(csock[client_number],&rfds)) {
+            if(FD_ISSET(csock[client_number],&rfds)) {  //s6 ,受信時,
                 
                 size_t readlen=read(csock[client_number],rbuf[client_number],sizeof(rbuf[client_number]));
                 if ( readlen < 0) {
@@ -71,12 +73,16 @@ void *client_socket(void *arg) {
                 else if (readlen == 0) { //ctr+D
                     //s7
                     for (int j=1; j<=MAXCLIENTS; j++){
-                        write(csock[j],user_name_list[client_number],sizeof(user_name_list[client_number]));
-                        /*write(csock[j],"==>",sizeof("==>"));*/
-                        write(csock[j],"connection ended\n",sizeof("connection ended\n"));
+                        if(j!=client_number && csock[j]!=-1){
+                            memset(temp, '\0', sizeof(temp));
+                            strcat(temp,user_name_list[client_number]);
+                            strcat(temp,yajirushi);
+                            strcat(temp,fin_message);
+                            write(csock[j],temp,sizeof(temp));
+                        }
                     }
                     
-                    //  printf("%s: exit\n",user_name_list[client_number]);
+                    printf("%s: exit\n",user_name_list[client_number]);
                     close(csock[client_number]);
                     
                     memset(user_name_list[client_number], '\0', sizeof(user_name_list[client_number]));
@@ -84,6 +90,8 @@ void *client_socket(void *arg) {
                     pthread_mutex_lock(&mutex);
                     k--;
                     pthread_mutex_unlock(&mutex);
+                    
+                    
                     switch (client_number){
                         case 1:
                             flag1=0;
@@ -104,7 +112,6 @@ void *client_socket(void *arg) {
                         case 5:
                             flag5=0;
                             break;
-                            
                     }
                 }
                 
@@ -112,13 +119,15 @@ void *client_socket(void *arg) {
                     write(1,user_name_list[client_number],sizeof(user_name_list[client_number]));
                     write(1,"==>",sizeof("==>"));
                     write(1,rbuf[client_number],sizeof(rbuf[client_number]));
-                    
                     //writeで他のsocketにも出力
                     for (int j=1; j<=MAXCLIENTS; j++){
                         if(j!=client_number && csock[j]!=-1){
-                            write(csock[j],user_name_list[client_number],sizeof(user_name_list[client_number]));
-                            /* write(csock[j],"==>",sizeof("==>"));*/
-                            write(csock[j],rbuf[client_number],/*sizeof*/strlen(rbuf[client_number]));
+                            memset(temp, '\0', sizeof(temp));
+                            strcat(temp,user_name_list[client_number]);
+                            strcat(temp,yajirushi);
+                            strcat(temp,rbuf[client_number]);
+                            write(csock[j],temp,sizeof(temp));
+                            
                         }
                     }
                     
@@ -183,6 +192,7 @@ int main(int argc,char **argv) {
         pthread_mutex_unlock(&mutex);
         
         temp=connect_check(sock);
+        
         if(temp!=-1) {
             pthread_mutex_lock(&mutex);
             k++;
@@ -194,8 +204,7 @@ int main(int argc,char **argv) {
                 }
             }
         }
-        else close(csock[0]);
-        
+        else  close(csock[0]);
         for (int i=1;i<MAXCLIENTS+1;i++){
             printf("user_name: %s\n",user_name_list[i]);
             printf("addr: %d\n",csock[i]);
@@ -239,7 +248,7 @@ int connect_check(int sock){
             for (i=1;i<MAXCLIENTS+1;i++){
                 if(strcmp(rbuf[0],user_name_list[i])==0){
                     write(csock[0], "USERNAME REJECTED\n", strlen("USERNAME REJECTED\n"));
-                    // return client_sock;
+                    //return client_sock;
                     flag=1;
                     break;
                 }
@@ -250,8 +259,8 @@ int connect_check(int sock){
                     if (user_name_list[i][0]=='\0'){
                         write(csock[0], "USERNAME REGISTERED\n", strlen("USERNAME REGISTERED\n"));
                         memset(user_name_list[i], '\0', sizeof(user_name_list[i]));
-                        strcpy(user_name_list[i],rbuf[0]); //ユーザー名登録
-                        client_sock=csock[0]; //ソケットの登録
+                        strcpy(user_name_list[i],rbuf[0]); //register username
+                        client_sock=csock[0]; //register socket
                         break;
                     }
                 }
@@ -268,4 +277,3 @@ int connect_check(int sock){
     
     return client_sock;
 }
-

@@ -8,11 +8,46 @@
 #include <stdlib.h>
 #include <sys/wait.h>
 #include <signal.h>
-#define TIMEOUT 10
+#define TIMEOUT 100
 #define PORT 10000
 void c6_exception(int);
+int finish=0;
+
+void myalarm(int sec) {
+    static int pid;
+    static int flag = 0;
+    if (flag>0){
+        kill(pid,SIGTERM);
+    }
+    flag++;
+    
+    if ((pid=fork())== -1) {
+        perror("fork failed.");
+        exit(1);
+    }
+    
+    if (pid == 0) {//30秒数える子プロセス
+        pid= getpid();       
+        sleep(sec);
+        pid_t p_pid = getppid(); // 親プロセスID取得
+        kill(p_pid,SIGALRM);
+        exit(0);
+    }
+    
+    signal(SIGCHLD,SIG_IGN);
+    return;
+}
+
+void timeout()
+{
+    printf(" You don't speak for 30 sec, so you are evicted.\n");
+    finish=1;
+}
+
+
 int main(int argc,char **argv)
 {
+    //s1
     int sock;
     int c2=0,c3=0,c4=0,c5=0;
     int result=0;
@@ -73,7 +108,7 @@ int main(int argc,char **argv)
     
     //c3
     if (c3==1){
-        if(write(sock, argv[2], strlen(argv[2]))==-1){
+        if(write(sock, argv[2], /*sizeof*/strlen(argv[2]))==-1){
             perror("writeforsend\n");
             exit(1);
         }
@@ -98,9 +133,20 @@ int main(int argc,char **argv)
     
     //c4
     
+    if(signal(SIGALRM,timeout) == SIG_ERR) {
+        perror("signal failed.");
+        exit(1);
+    }
+    
+    myalarm(TIMEOUT);
     if (c4==1){
-        int i=1;
         do {
+            
+            if (finish==1){
+                c4=0;
+                c5=1;
+                break;
+            }
             
             FD_ZERO(&rfds);
             FD_SET(0,&rfds);
@@ -111,7 +157,6 @@ int main(int argc,char **argv)
             if(select(sock+1,&rfds,NULL,NULL,&tv)>0 ){
                 
                 if(FD_ISSET(sock,&rfds)){
-                    
                     size_t readlen=read(sock,buf,sizeof(buf));
                     if ( readlen < 0) {
                         perror("read");
@@ -132,6 +177,8 @@ int main(int argc,char **argv)
                 }
                 
                 if(FD_ISSET(0,&rfds)) {
+                    myalarm(TIMEOUT);
+                    
                     if (fgets(buf, sizeof(buf), stdin) == NULL) {
                         // 標準入力が EOF なら状態 c5 へ
                         c5=1;
@@ -164,6 +211,7 @@ void c6_exception(int sock){
     close(sock);
     exit(1);
 }
+
 
 
 

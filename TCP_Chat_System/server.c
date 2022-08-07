@@ -9,7 +9,6 @@
 #include <sys/wait.h>
 #include <signal.h>
 #include <pthread.h>
-#define TIMEOUT 10
 #define MAXCLIENTS 5
 #define _UNIX03_THREADS
 int csock[MAXCLIENTS+1]={-1,-1,-1,-1,-1,-1};
@@ -17,7 +16,6 @@ char rbuf[MAXCLIENTS+1][1024];
 char user_name_list[MAXCLIENTS+1][1024];
 int k=0;
 int connect_check(int);
-pthread_t handle[MAXCLIENTS];  // Thread handle.
 int flag1=0;
 int flag2=0;
 int flag3=0;
@@ -27,8 +25,8 @@ pthread_mutex_t mutex;
 
 void *client_socket(void *arg) {
     int client_number;
-    char temp[99]; //add
-    char yajirushi[]="==>"; //add
+    char temp[99]; 
+    char yajirushi[]="==>"; 
     char fin_message[]="connection ended\n";
     if (flag1!=1) {
         flag1=1;
@@ -248,7 +246,6 @@ int connect_check(int sock){
             for (i=1;i<MAXCLIENTS+1;i++){
                 if(strcmp(rbuf[0],user_name_list[i])==0){
                     write(csock[0], "USERNAME REJECTED\n", strlen("USERNAME REJECTED\n"));
-                    //return client_sock;
                     flag=1;
                     break;
                 }
@@ -277,3 +274,4 @@ int connect_check(int sock){
     
     return client_sock;
 }
+

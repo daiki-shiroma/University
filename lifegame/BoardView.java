@@ -9,10 +9,7 @@ import java.util.ArrayList;
 public class BoardView extends JPanel implements MouseListener, MouseMotionListener {
 	private int printcols ;   
 	private int printrows; 
-	//private boolean[][] temp;
 	BoardModel model;
-//	private int x;
-//	private int y;
 	private ArrayList<Integer> listx;
 	private ArrayList<Integer> listy;
 	private ArrayList<Integer> initx;
@@ -23,12 +20,6 @@ public class BoardView extends JPanel implements MouseListener, MouseMotionListe
 		printcols=model.cols;
 		printrows=model.rows;
 		this.model=model;	
-		/*temp= new boolean [printcols+2][printrows+2];
-		for (int i = 0; i <printrows+2; i++) {  //前状態をコピー
-            for (int j = 0; j < printcols+2; j++) {
-                temp[i][j] = mo.cells[i][j];
-            }
-        } */
 		initx= new ArrayList<Integer>();
 		inity= new ArrayList<Integer>();
 		listx= new ArrayList<Integer>();
@@ -38,9 +29,6 @@ public class BoardView extends JPanel implements MouseListener, MouseMotionListe
 		this.addMouseListener(this);
         this.addMouseMotionListener(this);
 	}
-	
-	
-	
 	
 	public boolean isAlive(int x, int y) {		
 	    	if(model.cells[x][y]==true) return true;

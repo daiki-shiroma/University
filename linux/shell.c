@@ -59,44 +59,7 @@ int main(int argc, char *argv[])
     ali* ali_root=NULL;
     char init_name[]="Command";
     char *prompt_name=init_name;
-    /*
-     *  無限にループする
-     */
-    //スクリプト機能
-
-      /*  fp=fopen("script_file.txt","r");
-        if(fp == NULL){
-                fprintf(stderr, "script_file.txt is not found.\n");
-            }
-        else{
-        cc = getc(fp);                            // ファイルからの1文字読みだし
-
-           while(cc != EOF){
-
-               while(isspace(cc))  cc = getc(fp);
-              
-               if(cc == EOF) break;
-
-               tmp = string;
-               while(!(isspace(cc) || cc == EOF)){
-                  if((tmp - string) >= (MAXLENGTH - 1)){
-                       fprintf(stderr, "Too long sentence.\n");
-                       fclose(fp);
-                       exit(1);
-                   }
-                   *tmp++ = cc;
-                   cc = getc(fp);
-               }
-               *tmp = '\0';
-               system(string);
-               }
-        fclose(fp);
-            return 0;
-        }*/
-    //スクリプト機能ここまで
-
-
-
+    
     for(;;) {
     
 

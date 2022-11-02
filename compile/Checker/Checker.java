@@ -3,20 +3,17 @@ package enshud.s3.checker;
 import java.io.File;
 import java.io.IOException;
 import java.util.Scanner;
-import java.util.ArrayList;
-import java.util.Arrays;
-
-import enshud.s2.parser.Parser;
 
 public class Checker {
 	String[] str= {};
-	String[][] variable= new String[100][3];
+	String[][] variable= new String[100][4];
 	String scope="global";
 	int index=0;
 	int indexTemp=0;
 	int errorType=0;
+	int booleanType=0;
 	public static void main(final String[] args) {
-		new Checker().run("data/ts/normal10.ts");
+		new Checker().run("data/ts/semerr04.ts");
 	}
 
 	public void run(final String inputFileName) {
@@ -65,7 +62,6 @@ public class Checker {
 					}
 				}
 			}
-			//for (int i=0; i<index; i++) System.out.println(variable[i][0]+" "+variable[i][1]+" "+variable[i][2]);
 			if (flag!=1) grammerError(str,errorType); 
 			scanner.close();
 		} catch (IOException e) {
@@ -75,7 +71,6 @@ public class Checker {
 
 	public boolean SVAR(Scanner scanner) {
 		str = scanner.nextLine().split("\t");
-		 
 		if (str[1].equals("SIDENTIFIER")) { 
 			if(SIDENTIFIER(scanner,scope)) return true;
 		}
@@ -84,12 +79,15 @@ public class Checker {
 
 	public boolean SIDENTIFIER(Scanner scanner, String scope) {
 		int flag=0;
+		int arrayflag=0;
 		String temp;
 		temp=str[0];
 		variable[index][1]=temp;
-		//System.out.println(str[0]);
+
+		if(arrayCheck(temp))arrayflag=1;
+
 		str = scanner.nextLine().split("\t");
-		//System.out.println(str[0]);
+
 		if (str[1].equals("SCOMMA")) { 
 			while(true) {
 				if (flag==0) {
@@ -125,11 +123,11 @@ public class Checker {
 		if(str[1].equals("SLPAREN") || str[1].equals("SLBRACKET") ) { 
 			if (!Brackets(scanner)) return false;
 			else {
+				arrayflag=0;
 				if (str[1].equals("SSEMICOLON"))return true;
 				else str = scanner.nextLine().split("\t"); 
 			}
 		}
-
 
 		if (str[1].equals("SCOLON")) { 
 			if (!temp.equals(":")) {
@@ -143,24 +141,21 @@ public class Checker {
 				}
 			}
 			temp=str[0];
-
 			str = scanner.nextLine().split("\t");
 
 			if (str[1].equals("SINTEGER") || str[1].equals("SCHAR") || str[1].equals("SBOOLEAN") ) {
 				temp=str[0];
-
 				for (int i=indexTemp; i<index; i++) {
 					variable[i][2]=temp;
 					if(scope.equals("global")) variable[i][0]="global";
 					else variable[i][0]=scope;
 				}
 				scope="global";
-				//for (int i=0; i<index; i++) System.out.println(variable[i][0]+" "+variable[i][1]+" "+variable[i][2]);
 				indexTemp=index;
 				str = scanner.nextLine().split("\t");
-
 				if (str[1].equals("SSEMICOLON")) return true;
 			}
+			
 			else if(str[1].equals("SARRAY") ) {
 				str = scanner.nextLine().split("\t");
 
@@ -185,12 +180,12 @@ public class Checker {
 										if (str[1].equals("SINTEGER") || str[1].equals("SCHAR") || str[1].equals("SBOOLEAN") ) {
 											temp=str[0];
 											for (int i=indexTemp; i<index; i++) {
+												variable[i][3]="array";
 												variable[i][2]=temp;
 												if(scope.equals("global")) variable[i][0]="global";
 												else variable[i][0]=scope;
 											}
 											scope="global";
-												//for (int i=0; i<index; i++) System.out.println(variable[i][0]+" "+variable[i][1]+" "+variable[i][2]);
 											indexTemp=index;
 											str = scanner.nextLine().split("\t");
 											if (str[1].equals("SSEMICOLON")) return true;
@@ -205,14 +200,16 @@ public class Checker {
 		}
 
 		else if (str[1].equals("SASSIGN")) {
-
+			if (arrayflag==1) {
+				errorType=1;
+				return false;
+			}
 			str = scanner.nextLine().split("\t");
 			String substitution=str[0];
-			String substitutionType=str[1];
-
+			String substitutionType=str[1];			
 			if (str[1].equals("SBOOLEAN")|| str[1].equals("STRUE") ||str[1].equals("SFALSE")||str[1].equals("SSTRING") ) {
 				if (!temp.equals(":=")) {
-					if(varTypeCheck(temp,substitution,substitutionType)) {}
+					if(substitutionTypeCheck(temp,substitution,substitutionType)) {}
 					else {
 						errorType=1;
 						return false;
@@ -222,16 +219,36 @@ public class Checker {
 				str = scanner.nextLine().split("\t");
 				if (str[1].equals("SSEMICOLON"))return true;
 			}
-			else if (calculation(scanner)) return true;
+			else {
+				if (str[1].equals("SIDENTIFIER") ) {
+					String varType=varTypeCheck(temp);
+					if ((varType!=null)&&(varType.equals("integer")||(varType.equals("char")))) {
+						if(substitutionTypeCheck(temp,substitution,varType)) {}
+						else {
+							errorType=1;
+							return false;
+						}
+					}
+				}
+				if (calculation(scanner)) return true;
+			}
 		}
 
-		else if (str[1].equals("SSEMICOLON")) return true;
+		else if (str[1].equals("SSEMICOLON")) {
+			if (procedureCheck(temp))return true;
+			else errorType=1;
+		}
 
 		return false;	
 	}
 
 	public boolean calculation(Scanner scanner) {
+
 		int flag=0;
+		int integerType=0;
+		int charType=0;
+		int stringType=0;
+		int booleanType=0;
 		while(scanner.hasNextLine()) {
 
 			if (str[1].equals("SLPAREN")||(str[1].equals("SLBRACKET"))) {
@@ -249,8 +266,57 @@ public class Checker {
 
 			if ((flag==1)&&(str[1].equals("SSEMICOLON")|| (str[1].equals("SRPAREN"))||(str[1].equals("SRBRACKET")))) return true; 
 
-			if (str[1].equals("SCONSTANT") || str[1].equals("SIDENTIFIER") || str[1].equals("SSTRING") || str[1].equals("STRUE")) {
+			if (str[1].equals("SCONSTANT")) {
+				integerType=1;
+				if ((integerType+charType+stringType+booleanType)>1) {
+					errorType=1;
+					break;
+				}
 
+				str = scanner.nextLine().split("\t"); 
+
+				if (str[1].equals("SSEMICOLON")|| (str[1].equals("SRPAREN"))||(str[1].equals("SRBRACKET")))  return true; 
+			}
+
+			else if (str[1].equals("SIDENTIFIER")) {
+
+				String temp=varTypeCheck(str[0]);
+				if (temp!=null) {
+					if (temp.equals("integer"))integerType=1;
+					else if(temp.equals("char"))charType=1;
+					else if(temp.equals("string"))stringType=1;
+					else if(temp.equals("boolean")) {
+						booleanType=1;
+						this.booleanType=1;
+					}
+				}
+
+				if ((integerType+charType+stringType+booleanType)>1) {
+					errorType=1;
+					break;
+				}
+
+				str = scanner.nextLine().split("\t"); 
+
+				if (str[1].equals("SSEMICOLON")|| (str[1].equals("SRPAREN"))||(str[1].equals("SRBRACKET")))  return true; 
+			}
+
+			else if (str[1].equals("SSTRING")) {
+				stringType=1;
+				if ((integerType+charType+stringType+booleanType)>1) {
+					errorType=1;
+					break;
+				}
+				str = scanner.nextLine().split("\t"); 
+				if (str[1].equals("SSEMICOLON")|| (str[1].equals("SRPAREN"))||(str[1].equals("SRBRACKET")))  return true; 
+			}
+
+			else if (str[1].equals("STRUE")) {
+				booleanType=1;
+				if ((integerType+charType+stringType+booleanType)>1) {
+					errorType=1;
+					break;
+				}
 				str = scanner.nextLine().split("\t"); 
 
 				if (str[1].equals("SSEMICOLON")|| (str[1].equals("SRPAREN"))||(str[1].equals("SRBRACKET")))  return true; 
@@ -264,15 +330,19 @@ public class Checker {
 			}
 			else break;
 		}
+
 		if (str[1].equals("SEQUAL") || str[1].equals("SNOTEQUAL") || 
 				str[1].equals("SLESS") || str[1].equals("SLESSEQUAL")||
 				str[1].equals("SGREATEQUAL") || str[1].equals("SGREAT")) return true;
 
-		if (str[1].equals("STHEN") || str[1].equals("SDO"))	return true; 
+		if (str[1].equals("STHEN") || str[1].equals("SDO"))	{
+			this.booleanType=booleanType;
+			return true; 
+		}
 
 		if (str[1].equals("STRUE") || str[1].equals("SFALSE") || str[1].equals("SAND") 
 				|| str[1].equals("SOR") || str[1].equals("SNOT")) return true;
-
+		
 		return false;
 	}
 
@@ -285,17 +355,16 @@ public class Checker {
 		if(str[1].equals("SLBRACKET"))SLbracketflag=1;
 
 		str = scanner.nextLine().split("\t");
-		
+
 		while(true) {
 			if (str[1].equals("SLPAREN")||(str[1].equals("SLBRACKET"))) {
 				something=1;
 				if (Brackets(scanner)) str = scanner.nextLine().split("\t");
 				else break;
 			}
-			
 
 			if (str[1].equals("SIDENTIFIER")||str[1].equals("SCONSTANT")) { 
-				
+
 				if ((SLbracketflag==1)&&(str[1].equals("SIDENTIFIER"))&&(!checkSCONSTANT(str[0]))) {
 					errorType=1;
 					break;
@@ -303,39 +372,36 @@ public class Checker {
 				something=1;
 				temp=str[0];
 				str = scanner.nextLine().split("\t");
-				
+
 				if (str[1].equals("SCOMMA")) { 
 					functionArgument=1;
 					while(true) {
 						if (flag==0) {
 							if (str[1].equals("SCOMMA")) {
-								
 								if (!temp.equals(",")) {
 									variable[index][1]=temp;
 									index++;
 								}
 								str = scanner.nextLine().split("\t");
 								temp=str[0];		
-								
 								flag=1;
 							}
 							else return false;
 						}
-						//for (int i=0; i<index; i++) System.out.println(variable[i][0]+" "+variable[i][1]+" "+variable[i][2]);
+						
 						if (flag==1) {
 							if ((!temp.equals(","))) {
 								variable[index][1]=temp;
 								index++;
 							}
-							
+
 							if (!calculation(scanner)) {
 								if(str[1].equals("SCOLON")||str[1].equals("SCOMMA")) {}
 								else break;
 							}
-							else {str = scanner.nextLine().split("\t");}
+							else str = scanner.nextLine().split("\t");
 							flag=0;
 							temp=str[0];
-							//System.out.println(str[0]);
 						}
 						if (flag==0 && str[1].equals("SCOLON")) break;
 
@@ -378,7 +444,7 @@ public class Checker {
 
 			if (something==0) break;
 
-			if (str[1].equals("STHEN") || str[1].equals("SDO")) 	return true;
+			if (str[1].equals("STHEN") || str[1].equals("SDO")) return true;
 
 			if (str[1].equals("SSEMICOLON")) return true;
 
@@ -390,13 +456,13 @@ public class Checker {
 			if (str[1].equals("SEQUAL") || str[1].equals("SNOTEQUAL") || 
 					str[1].equals("SLESS") || str[1].equals("SLESSEQUAL")||
 					str[1].equals("SGREATEQUAL") || str[1].equals("SGREAT")) return true;
-
 		}
 		return false;
 	}
 
 	public boolean conditionalExpression(Scanner scanner) {
 		int brflag=0;
+		int loopcount=0;
 		while(true) {
 			str = scanner.nextLine().split("\t");
 
@@ -407,6 +473,7 @@ public class Checker {
 			if (str[1].equals("SNOT")) str = scanner.nextLine().split("\t");
 
 			if (!calculation(scanner)) break;
+
 			if (str[1].equals("SEQUAL") || str[1].equals("SNOTEQUAL") || 
 					str[1].equals("SLESS") || str[1].equals("SLESSEQUAL")||
 					str[1].equals("SGREATEQUAL") || str[1].equals("SGREAT")) {
@@ -421,6 +488,11 @@ public class Checker {
 				if (str[1].equals("SNOT")) str = scanner.nextLine().split("\t");
 
 				if (!calculation(scanner)) 	break;
+				loopcount++;
+			}
+
+			else if (str[1].equals("STRUE") || str[1].equals("SFALSE")) {
+				str = scanner.nextLine().split("\t");
 			}
 
 			if (str[1].equals("STRUE") || str[1].equals("SFALSE")) str = scanner.nextLine().split("\t");
@@ -428,12 +500,25 @@ public class Checker {
 			if(brflag>0 && (str[1].equals("SRPAREN"))) {
 				str = scanner.nextLine().split("\t");
 				brflag--;
+				loopcount++; 
 			}
 
-			if (str[1].equals("SAND") || str[1].equals("SOR")) {}
+			if (str[1].equals("SAND") || str[1].equals("SOR")) loopcount++; 
 
-			if ((brflag==0)&&(str[1].equals("SDO")|| str[1].equals("STHEN")))  return true;
-
+			if ((brflag==0)&&(str[1].equals("SDO")|| str[1].equals("STHEN"))) {
+				if(loopcount==0 && brflag==0) {
+					if (booleanType==1) {
+						booleanType=0;
+						return true;
+					}
+					else {
+						errorType=1;
+						break;
+					}
+				}
+				else return true;	
+			}
+			loopcount++; 
 		}
 		return false;
 	}
@@ -552,7 +637,7 @@ public class Checker {
 			str = scanner.nextLine().split("\t");
 
 			if (str[1].equals("SLPAREN")) {
-				
+
 				if (Brackets(scanner)) str = scanner.nextLine().split("\t");
 				else return false;
 			}
@@ -595,25 +680,19 @@ public class Checker {
 					return false;
 				}
 			}
-
 		}
 		return true;
 	}
 
-	public boolean varTypeCheck(String varName, String substitution,String substitutionType) {
-		//System.out.println(varName);
-		//System.out.println(substitution);
+	public boolean substitutionTypeCheck(String varName, String substitution,String substitutionType) {
 		String varType=null;
 		for (int i=0; i<100;i++) {
 			if((variable[i][0]!=null)&&(variable[i][0].equals(scope))) {
-
 				if (variable[i][1].equals(varName)) {
-
 					if (str[1].equals("SIDENTIFIER")) {
-
 						for (int j=0; j<100;j++) {
 							if((variable[j][0]!=null)&&(variable[j][0].equals(scope))) {
-								if (variable[j][1].equals(substitution)) {
+								if (variable[j][1].equals(substitution)) {		
 									varType=variable[j][2];
 									break;
 								}
@@ -638,25 +717,50 @@ public class Checker {
 					else break;
 				}
 			}
-
 		}
 		return false;
 	}
-	
-	
+
+
 	public boolean checkSCONSTANT(String varName) {
 		for (int i=0; i<100;i++) {
-			
 			if((variable[i][0]!=null)&&(variable[i][0].equals(scope))) {
 				if (variable[i][1].equals(varName)) {
-					//System.out.println(variable[i][1]);
-					//System.out.println(variable[i][2]);
 					if (variable[i][2].equals("integer")) {
 						return true;
 					}
 				}
 			}
+		}
+		return false;
+	}
 
+	public String varTypeCheck(String varName) {
+		for (int i=0; i<100;i++) {
+			if((variable[i][0]!=null)&&(variable[i][0].equals(scope))) {
+				if (variable[i][1].equals(varName)) {
+					return variable[i][2];
+				}
+			}
+		}
+		return null;
+	}
+
+	public boolean procedureCheck(String varName) {
+		for (int i=0; i<100;i++) {
+			if((variable[i][0]!=null)&&((variable[i][0].equals(varName))||(variable[i][1].equals(varName)))) return true;
+		}
+		return false;
+	}
+
+	public boolean arrayCheck(String varName) {
+		for (int i=0; i<100;i++) {
+			if((variable[i][0]!=null)&&(variable[i][0].equals(scope))) {
+				if (variable[i][1].equals(varName)) {
+					if ((variable[i][3]!=null)&&(variable[i][3].equals("array")))
+						return true;
+				}
+			}
 		}
 		return false;
 	}
@@ -669,5 +773,4 @@ public class Checker {
 		if (errorType==1)System.err.println("Semantic error: line " + str[3]);
 		else System.err.println("Syntax error: line " + str[3]);
 	}
-
 }

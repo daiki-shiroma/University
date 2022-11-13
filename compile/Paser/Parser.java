@@ -27,6 +27,7 @@ public class Parser {
 
 					if (str[1].equals("SSEMICOLON")) {
 						while(scanner.hasNextLine()) {
+							
 							str = scanner.nextLine().split("\t");
 
 							if (str[1].equals("SVAR")) {
@@ -305,6 +306,7 @@ public class Parser {
 
 				if(str[1].equals("SLPAREN") || str[1].equals("SLBRACKET") ) {
 					str = scanner.nextLine().split("\t");
+					brflag++; //add
 				}
 
 				if (str[1].equals("SNOT")) str = scanner.nextLine().split("\t");

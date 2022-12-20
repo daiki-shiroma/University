@@ -1,0 +1,18 @@
+db.rg.aggregate([
+{$group: { _id: '$code', count: {$sum: 1}}},
+{$match: {count: {$gte: 10}}},
+{$lookup: {from: 'cs', localField: '_id', foreignField: 'code', as: 'mach_cs'}},
+{$project: { _id: 0, mach_cs: { title: 1 }, count: 1 } }
+])
+
+
+
+db.rg.aggregate([
+{$lookup: {from: 'cs', localField: 'code', foreignField: 'code', as: 'mach_cs'}},
+{$lookup: {from: 'st', localField: 'number', foreignField: 'number', as: 'mach_st'}},
+{$match:{'mach_cs.room': null}},
+{$project: { _id: 0, mach_cs: { title: 1 }, mach_st:{name: 1}} }
+])
+
+
+

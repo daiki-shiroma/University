@@ -1,0 +1,63 @@
+
+SELECT DISTINCT course.title
+FROM course, lecturer, lectured_by
+WHERE lectured_by.code = course.code AND lecturer.number = lectured_by.number
+AND lecturer.affiliation = 'ICS';
+
+
+
+SELECT  course.code, AVG(registration.grade)
+FROM course, lecturer, lectured_by,registration
+WHERE lectured_by.code = registration.code
+AND registration.code = course.code AND lecturer.number = lectured_by.number
+AND lecturer.affiliation = 'ICS'
+GROUP BY course.code;
+
+
+
+SELECT course.code, AVG(grade)
+FROM course, registration
+WHERE course.credit >= 3 AND course.code=registration.code
+GROUP BY course.code;
+
+
+
+SELECT DISTINCT lecturer.name
+FROM student, registration, course, lecturer, lectured_by
+WHERE student.number =registration.number  AND registration.code = lectured_by.code AND lectured_by.number=lecturer.number AND student.name = 'London';
+
+
+
+WITH max_grade(code, grade) AS
+(SELECT code, MAX(grade) FROM registration
+GROUP BY code)
+
+SELECT x.code, x.grade, z.name
+FROM max_grade AS x, registration AS y, student AS z WHERE x.code = y.code AND x.grade = y.grade AND y.number=z.number
+
+
+
+SELECT DISTINCT student.name
+FROM student, registration, course
+WHERE course.room IS NULL AND course.code=registration.code AND registration.number=student.number
+
+
+WITH r_course(code) AS
+(SELECT DISTINCT course.code
+FROM course
+WHERE course.type='R' 
+GROUP BY course.code
+ORDER BY course.code 
+)
+
+SELECT 
+registration.number
+FROM 
+registration
+INNER JOIN
+r_course
+ON
+registration.code=r_course.code 
+GROUP BY registration.number
+HAVING COUNT(registration.code)= (SELECT COUNT(*) FROM course WHERE course.type='R')
+ORDER BY registration.number

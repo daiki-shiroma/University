@@ -27,15 +27,17 @@ entity Controler is
     ZeroF     : in  std_logic;
     CarryF    : in  std_logic;
 
-    loadRegC  : out std_logic; ------
+    loadRegC  : out std_logic; 
     loadRegB  : out std_logic;
     loadRegA  : out std_logic;
 
-    modeALU   : out std_logic_vector (3 downto 0); ------
+    modeALU   : out std_logic_vector (3 downto 0); 
     loadFZ    : out std_logic;
-    loadFC    : out std_logic;  -----
+    loadFC    : out std_logic;  
+    selMuxDOut: out std_logic_vector (1 downto 0); 
 
-    selMuxDOut: out std_logic_vector (1 downto 0); ---------
+    selMuxDOutAdd: out std_logic;   ----------add
+
 
     read      : out std_logic;
     write     : out std_logic;
@@ -101,16 +103,18 @@ end component;
 signal qJCextA : std_logic;
 signal qJCextB : std_logic;
 signal qJCextC : std_logic_vector(1 downto 0);
+signal qJCextD : std_logic_vector(1 downto 0);  
+signal qJCextE : std_logic_vector(2 downto 0);  
 
-signal qJCextD : std_logic_vector(1 downto 0);  ----
-signal qJCextE : std_logic_vector(2 downto 0);  ----
+signal qJCextF : std_logic_vector(1 downto 0);  ------
 
 signal cJCextA : std_logic;
 signal cJCextB : std_logic;
 signal cJCextC : std_logic;
+signal cJCextD : std_logic;  
+signal cJCextE : std_logic;   
 
-signal cJCextD : std_logic;   -----
-signal cJCextE : std_logic;   ------
+signal cJCextF : std_logic;    ------
 
 signal cs1     : std_logic;
 signal cs2     : std_logic;
@@ -208,6 +212,28 @@ JCextE : Johnson3L0
   );
 
 
+
+--------------add
+
+
+----------------
+--   JCextF   --
+----------------
+JCextF : Johnson2L0
+  port map(
+    cond0  => cJCextF,
+    clock => clock,
+    reset => reset,
+    q     => qJCextF
+  );
+
+
+-------------------
+
+
+
+
+
 --------------------------------
 --  
 --  Decode logic for External Signals
@@ -239,6 +265,8 @@ read  <= '0' when qJCextA = '1' else
          '0' when qJCextB = '1' else
          '0' when qJCextE = "001" else
          '0' when qJCextE = "011" else
+         '0' when qJCextF = "01" else   ----
+         '0' when qJCextF = "11" else   ----
          '1';
 
 write <= '0' when qJCextC = "11" else
@@ -339,7 +367,7 @@ cJCextA <= '1' when qJCintA = '0' else
            '1' when (qJCintB = "10" and irout = "11011000") else -- LDIA
            '1' when (qJCintB = "10" and irout = "11011001") else -- LDIB
 
-           ----'1' when (qJCintB = "10" and irout = "00000000") else -- NOP  ---???
+           ----'1' when (qJCintB = "10" and irout = "00000000") else -- NOP  
 
            '1' when (qJCintB = "10" and irout = "01100000") else -- JP
 
@@ -352,9 +380,9 @@ cJCextA <= '1' when qJCintA = '0' else
 
            '1' when (qJCintD = '1')  else
 
-           '1' when (qJCintE = "10") else
+           '1' when (qJCintE = "10") else    ----
 
-           '1' when (qJCintF = "100") else
+           '1' when (qJCintF = "100") else   
            '0';
 
 cJCextB <= '1' when (qJCintB = "10" and irout = "11100000") else -- LDDA
@@ -369,6 +397,15 @@ cJCextD <= '1' when (qJCintB = "10" and irout = "11110100") else -- STDB
 
 cJCextE <= '1' when (qJCintB = "10" and irout = "11111000") else -- STDI   
            '0';
+
+
+
+cJCextF <= '1' when (qJCintB = "10" and irout = "01110000") else -- SLL       -------add
+           '1' when (qJCintB = "10" and irout = "01110001") else -- SRL       --------add
+           '0';
+
+
+
 
 cs1     <= '1' when qJCintB  = "11"  else      
            '1' when (qJCintF = "110"and irout = "01100000") else -- JP
@@ -414,6 +451,8 @@ cJCintD <= '1' when (qJCintB = "10" and irout(7 downto 6) = "10") else -- ADDA/B
 
 cJCintE <= '1' when (qJCintB = "10" and irout ="11110000") else -- STDA
            '1' when (qJCintB = "10" and irout ="11110100") else -- STDB
+           '1' when (qJCintB = "10" and irout ="01110000") else -- SLL   -------
+           '1' when (qJCintB = "10" and irout ="01110001") else -- SRL   -------
            '0';
       
 cJCintF <= '1' when (qJCintB = "10" and irout = "11111000") else -- STDI 
@@ -435,14 +474,20 @@ clearIP   <= '1' when qJCintA='0' else
 loadIR    <= '1' when qJCintB = "11" else
 	     '0';
 
-modeALU   <= irout(3 downto 0) when (qJCintD = '1' and irout(7 downto 6) = "10") else -- ALU,CMP
-             --ALU extended
-             -- 1100  when (qJ =  and irout(7 downto 1) = "0111010") else -- MOVE
+modeALU   <= --irout(3 downto 0) when (qJCintD = '1' and irout(7 downto 6) = "10") else -- ALU,CMP
 
- 
-             "1111";
+             --ALU extended
+             "1100"  when (qJCintD = '1'   and irout = "01110100") else -- MOVEAB  ------
+             "1101"  when (qJCintD = '1'   and irout = "01110101") else -- MOVEBA  ------
+
+             "1110"  when (qJCintE = "10"   and irout = "01110000") else -- SLL     ----- 
+             "1111"  when (qJCintE = "10"   and irout = "01110001") else -- SRL     ------
+             "0111";  --not used former = "1111"
 
 loadFZ    <= '1' when ( qJCintD = '1' and irout(7 downto 6) = "10") else -- ADDA ADDB INCA DECA 
+
+             '1' when ( qJCintE = "10" and irout = "01110000") else --SLL --
+             '1' when ( qJCintE = "10" and irout = "01110001") else --SRL --
              '0';
 
 loadFC    <= '1' when ( qJCintD = '1' and irout = "10000000") else --ADDA
@@ -453,6 +498,9 @@ loadFC    <= '1' when ( qJCintD = '1' and irout = "10000000") else --ADDA
              '1' when ( qJCintD = '1' and irout = "10010001") else --SUBB
              '1' when ( qJCintD = '1' and irout = "10011001") else --INCB
              '1' when ( qJCintD = '1' and irout = "10011010") else --DECB
+
+             '1' when ( qJCintE = "10" and irout = "01110000") else --SLL --
+             '1' when ( qJCintE = "10" and irout = "01110001") else --SRL --
              '0';
 
 loadhMB  <=  '1' when (qJCintF = "011" and irout = "01100000") else -- JP
@@ -479,20 +527,34 @@ loadlIX <= '1' when (qJCintC = "11" and irout = "11010001") else -- SETIXL
  
 loadRegA <= '1' when (qJCintC = "11" and irout = "11011000") else -- LDIA 
             '1' when (qJCintC = "11" and irout = "11100000") else -- LDDA 
-            '1' when (qJCintD = '1'  and irout(7 downto 4) = "1000")  else -- ALUA  
+            '1' when (qJCintD = '1'  and irout(7 downto 4) = "1000")  else -- ALUA 
+ 
+            '1' when (qJCintD = '1'  and irout ="01110101")  else -- MOVEBA  --add
+
+            '1' when ( qJCintE = "10" and irout = "01110000") else --SLL --
+            '1' when ( qJCintE = "10" and irout = "01110001") else --SRL -- 
             '0';
 
 loadRegB <= '1' when (qJCintC = "11" and irout = "11011001") else -- LDIB
             '1' when (qJCintC = "11" and irout = "11100001") else -- LDDB
-            '1' when (qJCintD = '1'  and irout(7 downto 4) = "1001")  else -- ALUB  
+            '1' when (qJCintD = '1'  and irout(7 downto 4) = "1001")  else -- ALUB 
+
+            '1' when (qJCintD = '1'  and irout ="01110100")  else -- MOVEAB  --add 
             '0'; 
 
 loadRegC <= '1' when (qJCintF = "011" and irout="11111000") else -- stdi
+
+            '1' when ( qJCintE = "11" and irout = "01110000") else --SLL --
+            '1' when ( qJCintE = "11" and irout = "01110001") else --SRL --
+
+
             '0'; 
 
 incIP   <=  '1' when qJCintB = "10"  else
             '1' when (qJCintC = "11" and irout(7 downto 5) = "110") else -- SETIXH SETIXL LDIA LDIB
             '1' when qJCintF = "011" else
+            '1' when ( qJCintE = "11" and irout = "01110000") else --SLL --
+            '1' when ( qJCintE = "11" and irout = "01110001") else --SRL --
             '0';
    
 inc2IP   <= '1' when (qJCintD = '1' and irout(7 downto 4) = "0101" and ZeroF = '0') else -- JPZ(Z=0)
@@ -513,6 +575,16 @@ selMuxDIn<= '1' when (qJCintC = "01" and irout = "11011000") else -- LDIA
 
             '1' when (qJCintF = "011" and irout="11111000") else -- stdi
 
+
+            '1' when ( qJCintE = "01" and irout = "01110000") else --SLL --
+            '1' when ( qJCintE = "01" and irout = "01110001") else --SRL --
+            '1' when ( qJCintE = "11" and irout = "01110000") else --SLL --
+            '1' when ( qJCintE = "11" and irout = "01110001") else --SRL --
             '0' ;
+
+
+selMuxDoutAdd   <=  '1' when ( qJCintE = "10" and irout = "01110000") else --SLL --
+                    '1' when ( qJCintE = "10" and irout = "01110001") else --SRL -- 
+                     '0';
 
 end logic;

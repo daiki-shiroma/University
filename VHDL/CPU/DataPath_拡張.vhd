@@ -44,7 +44,11 @@ entity DataPath is
     reset     : in  std_logic;
 
 
-    selMuxDOut: in   std_logic_vector (1 downto 0)
+    selMuxDOut: in   std_logic_vector (1 downto 0);
+
+    selMuxDOutAdd: in std_logic   ----------add
+
+ 
    );
   end DataPath;
   
@@ -109,7 +113,7 @@ component Counter16  --IP
   );
 end component;
 
-component mux2x08  --MuxDIn
+component mux2x08  --MuxDIn, RegBorRegC--new
    port (
     a   : in  std_logic_vector(7 downto 0);
     b   : in  std_logic_vector(7 downto 0);
@@ -152,6 +156,9 @@ signal foutALU    : std_logic_vector(7 downto 0);
 signal coutALU    : std_logic;
 signal zoutALU    : std_logic;
 signal DataInTmp  : std_logic_vector(7 downto 0);
+
+signal DataInTmpAdd  : std_logic_vector(7 downto 0); --- add
+
 --------------------------------
 
 signal zero     : std_logic;
@@ -173,6 +180,33 @@ MuxDIn : mux2x08
     sel => selMuxDIn,
     q   => DataInTmp
   );
+
+
+
+
+
+
+
+--------------------------------
+-- Selector to Data Bus In    --
+--                            --
+--       (c) Keishi SAKANUSHI --
+--                 2004/08/23 --
+--------------------------------
+RegBorRegC : mux2x08
+  port map (
+    a   => qRegB,
+    b   => qRegC,
+    sel => selMuxDoutAdd,
+    q   => DataInTmpAdd
+  );
+
+
+
+
+
+
+
 
 
 --------------------------------
@@ -261,7 +295,7 @@ IX : Register16in2
 ALU : ALU08
   port map(
     a       => qRegA,
-    b       => qRegB,
+    b       => DataInTmpAdd, ---changed
     cin     => zero,
     mode    => modeALU,
     fout    => foutALU,

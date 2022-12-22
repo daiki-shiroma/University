@@ -37,7 +37,7 @@ architecture behavior of TestProcessor is
 -------------------------------------------------------------------------------
 -- component declaration ------------------------------------------------------
 -------------------------------------------------------------------------------
-  component TinyProcessor
+  component CProcessor
   port (
     clock   : in  std_logic;
     reset   : in  std_logic;
@@ -77,7 +77,7 @@ architecture behavior of TestProcessor is
   
 begin
 
-  Processor:TinyProcessor
+  Processor:CProcessor
     port map (  clock   => clock,
                 reset   => reset,
                 DataIn  => datain,
@@ -134,5 +134,3 @@ begin
 
   
 end behavior;
-
-

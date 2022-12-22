@@ -14,6 +14,7 @@
 --------------------------------
 library IEEE;
 use IEEE.std_logic_1164.all;
+use ieee.std_logic_arith.all;
 
 entity DFF is
   port (
@@ -349,7 +350,7 @@ end FullAdder;
 
 architecture rtl of FullAdder is
 begin 
-  s <= x xor y xor cin;
+  s <= x xor y xor cin;          ----------------------
   c <= (x and y) or ((x or y) and cin);
 end rtl;
 
@@ -481,6 +482,7 @@ end rtl;
 
 Library IEEE;
 use IEEE.std_logic_1164.all;
+use IEEE.std_logic_arith.all;
 
 entity ALU08 is
   port (
@@ -513,15 +515,31 @@ signal inB          : std_logic_vector(7 downto 0);
 signal cout_tmp     : std_logic;
 signal cin_tmp      : std_logic;
 
+
+
 begin
 
-inA <= a            when mode = "0000"   or      -- (a + b)
+inA <= a       when mode = "0000"   or      -- (a + b)
 
                     mode = "0001"   or       -- (a - b)
 
                     mode = "0101"   or       -- (a + 1)
      
-                     mode = "0110"  else     -- (a - 1)
+                    mode = "0110"  else     -- (a - 1)
+
+
+
+      "00000000"      when mode = "1100"  else     -- MOVEAB
+
+       b            when mode = "1101"  else     -- MOVEBA
+
+       --sh_left(a,to_integer(b))  when mode = "1110"  else     -- SLL
+
+       --a sll b  when mode = "1110"  else     -- SLL
+
+       --sh_right(a,to_integer(b)) when mode = "1111"  else     -- SRL
+
+       '0' & a(7 downto 1)  when mode = "1111"  else     -- SRL
 
        b;                                        -- (b+1, b-1)
 
@@ -531,11 +549,21 @@ inB <= b            when mode = "0000"   else       -- (a + b)
 
    (not b)          when mode = "0001"   else       -- (a - b)
 
-     "00000001"     when mode = "1001"   or  mode = "0101"   else        -- (b + 1),(a + 1)
+     "00000001"     when mode = "1001"   or  mode = "0101"   else    -- (b + 1),(a + 1)
 
      "11111111"     when mode = "1010"   or  mode = "0110"   else    -- (b - 1), (a - 1)
 
-     "00000000";                     
+
+      a             when mode = "1100"  else     -- MOVEAB
+
+     "00000000"      when mode = "1101"  else     -- MOVEBA
+
+     "00000000"     when mode = "1110"  else     -- SLL
+
+     "00000000"     when mode = "1111"  else     -- SRL
+
+     "00000000"; 
+                    
            
 cin_tmp <=   '1'  when mode = "0001" else
              cin;

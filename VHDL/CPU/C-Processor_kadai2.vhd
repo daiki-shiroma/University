@@ -15,7 +15,12 @@ entity CProcessor is
     DataOut : out std_logic_vector (7 downto 0);
     Address : out std_logic_vector (15 downto 0);
     read    : out std_logic;
-    write   : out std_logic
+    write   : out std_logic;
+    dbgIRout  : out std_logic_vector (7 downto 0);  -- added for debug on FPGA
+    dbgZeroF  : out std_logic;                      -- added for debug on FPGA
+    dbgCarryF : out std_logic;                      -- added for debug on FPGA
+    dbgAout   : out std_logic_vector (7 downto 0);  -- added for debug on FPGA
+    dbgBout   : out std_logic_vector (7 downto 0)   -- added for debug on FPGA
   );
 end CProcessor;
 
@@ -54,7 +59,9 @@ architecture logic of CProcessor is
     loadFC    : in  std_logic;
 
     clock     : in  std_logic;
-    reset     : in  std_logic
+    reset     : in  std_logic;
+    Aout      : out std_logic_vector (7 downto 0); -- added for debug on FPGA
+    Bout      : out std_logic_vector (7 downto 0)  -- added for debug on FPGA
     );
   end component;
   
@@ -161,7 +168,9 @@ path : DataPath
     modeALU    => modeALU,
 
     clock     => clock,
-    reset     => reset
+    reset     => reset,
+    Aout      => dbgAout,   -- added for debug on FPGA
+    Bout      => dbgBout    -- added for debug on FPGA
   );
 
 ctrl : Controler
@@ -202,5 +211,9 @@ reset     => reset,
     read      => read,
     write     => write
   );
+
+dbgIRout <= IRout;      -- added for debug on FPGA
+dbgZeroF <= ZeroF;      -- added for debug on FPGA
+dbgCarryF <= CarryF;    -- added for debug on FPGA
 
 end logic;

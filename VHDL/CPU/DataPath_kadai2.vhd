@@ -44,7 +44,9 @@ entity DataPath is
     reset     : in  std_logic;
 
 
-    selMuxDOut: in   std_logic_vector (1 downto 0)
+    selMuxDOut: in   std_logic_vector (1 downto 0);
+    Aout      : out std_logic_vector (7 downto 0);    -- added for debug on FPGA
+    Bout      : out std_logic_vector (7 downto 0)     -- added for debug on FPGA
    );
   end DataPath;
   
@@ -367,5 +369,7 @@ MuxDOut : Mux4x08
     q   => DataOut
   );
 
+Aout <= qRegA;  -- added for debug on FPGA
+Bout <= qRegB;  -- added for debug on FPGA
 
 end logic;

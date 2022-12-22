@@ -1,0 +1,209 @@
+0000    d0      -- SETIXH
+0001    ff      -- 
+0002	d1      -- SETIXL
+0003	fe	-- 
+0004    e0      -- LDDA  push=0 or 1
+0005    85      -- incA
+0006    86      -- decA
+0007    50      -- jpz   z=1
+
+0008    00      --
+0009    04      -- push=0
+000a	d1      -- SETIXL   
+000b	ff	--                
+000c    e0      -- LDDA  A<=num
+000d    d0      -- SETIXH
+000e    80      -- 
+000f    d1      -- SETIXL
+
+0010    02	-- 
+0011    f0	-- STDA  8002にAの値を保存
+0012    86      -- DECA
+0013    85      -- INCA
+0014    50      -- JPZ, z=1
+0015    01
+0016    0a　    -- if z=1  --result
+0017    d9      -- LDIB  
+
+0018    80      -- 1000 0000
+0019    80      -- ADDA
+001a    40      -- JPC
+001b    00
+001c    89      -- if c=1  input A is minus     
+001d    d0      -- SETIXH  -- start input B 
+001e    ff      -- 
+001f    00
+
+0020    00
+0021    d1      -- SETIXL
+0022    fe	-- 
+0023    e1      -- LDDB  push=0 or 2
+0024    d8      -- LDIA
+0025	02      --
+0026	91      -- SUBB B-A
+0027    50      -- jpz   z=1
+
+0028    00      --
+0029    2d      -- push=2
+002a    60      -- jp
+002b    00
+002c    23   
+002d    d1      -- SETIXL   -- push=1
+002e    ff	--           
+002f	e1      -- LDDB  B<=num	               
+
+0030    00
+0031    d0      -- SETIXH
+0032    80      -- 
+0033    d1      -- SETIXL
+0034    03	-- 
+0035    f4	-- STDB 　8003にBの値を保存
+0036    9a      -- DECB
+0037    99      -- INCB
+
+0038    50      -- JPZ, z=1   --ans b is 0
+0039    01
+003a    10      -- if z=1  
+003b    00       
+003c    d8      -- LDIA  
+003d    80      -- 1000 0000 
+003e    90      -- ADDB
+003f    40      -- JPC, C=1
+
+0040    00
+0041    99      -- if c=1  --input B is minus 
+0042    00
+0043    d1      -- SETIXL ---- start calculate
+0044    03	-- 
+0045    e1      -- LDDB  
+0046    d1      -- SETIXL  --　初期化
+0047    02	-- 
+
+0048    e0      -- LDDA   
+0049    d1      -- SETIXL
+004a    01	--        --- 作業用  ---[8001]=A
+004b    f0	-- STDA
+004c 	d1      -- SETIXL
+004d 	03	--        
+004e    e1      -- LDDB　 
+004f    9a      -- DECB ---cal roop
+
+0050    50      -- JPZ B=0 ,Z=1
+0051    00
+0052    69      --  fin  
+0053    f4	-- STDB 8003にBを格納    
+0054    d1      -- SETIXL     
+0055    02	-- 
+0056    e1	-- LDDB B←A   
+0057    d1      -- SETIXL
+
+0058    01	-- 
+0059    e0      -- LDDA   A←[8001]
+005a    80      -- ADDA (A+A)
+005b    d1      -- SETIXL
+005c    01	-- 
+005d    f0	-- STDA 01にA+Aを保存
+005e    d1      -- SETIXL
+005f    03	-- 
+
+0060    e1      -- LDDB
+0061    60      -- JP
+0062    00 
+0063    4f      ---cal roop
+0064    00
+0065    00
+0066    00
+0067    00
+
+0068    00
+0069    d1      -- SETIXL    --fin
+006a    02	-- Aの値が入ってる番地
+006b    f0	-- STDA      -- 絶対値　計算結果
+006c    d1      -- SETIXL   
+006d    04	--  
+006e    e0	-- LDDA ← signal
+006f    d9      -- LDIB
+
+0070    01      -- 
+0071    a1      -- CMP  
+0072    50      -- JPZ, z=1   ---- anser is minus
+0073    00
+0074    7d      -- minus
+0075    60      -- JP
+0076    01
+0077    0a      ---  result   
+       
+0078    00
+0079    00
+007a    00
+007b    00
+007c    00
+007d    d1      -- SETIXL   -- anser is minus
+007e    02	-- 
+007f    e0      -- LDDA 
+ 
+0080    84      -- NOTA 
+0081    85      -- INCA    
+0082    d1      -- SETIXL
+0083    02	-- 
+0084    f0	-- STDA  8002にAの値を保存
+0085    60      -- JP
+0086    01 
+0087    0a      --- result  
+
+0088    00
+0089    d1      -- SETIXL   -- input A is minus
+008a    04	-- signal
+008b    e0      -- LDDA  
+008c    85      -- INCA     -- マイナスの数
+008d    f0	-- STDA
+008e    d1      -- SETIXL   -- 反転 +1
+008f    02	-- 
+
+0090    e0      -- LDDA  
+0091    84      -- NOTA 
+0092    85      -- INCA    -- 絶対値
+0093    d1      -- SETIXL
+0094    02	-- 
+0095    f0	-- STDA  8002にAの値を保存
+0096    60      -- JP
+0097    00
+
+0098    1d　　　 -- start input B 
+0099    d1      -- SETIXL   --input B is minus
+009a    04	-- signal
+009b    e0      -- LDDA  
+009c    85      -- INCA
+009d    f0	-- STDA
+009e    d1      -- SETIXL
+009f    03	--
+
+0100    e1      -- LDDB 
+0101    98      -- NOTB
+0102    99      -- INCB
+0103    d1      -- SETIXL
+0104    03	-- 
+0105    f4	-- STDB  8003にBの値を保存
+0106    60      -- JP
+0107    00 
+
+0108    43      -- start calculate
+0109    00
+010a    d1      -- SETIXL     --result
+010b    02	-- 
+010c    e0      -- LDDA 
+010d    60      -- JP
+010e    03 
+010f    00      -- farway
+
+0110    d1      -- SETIXL     -- ans b is 0
+0111    03	-- 
+0112    e0      -- LDDA  
+
+8000    00      -- 
+8001    00      -- temp
+8002    00　　　 --STDA save 
+8003    00      --STDB save 
+8004    00      --signal
+fffe    00      -- push
+ffff    00      -- dicide_number

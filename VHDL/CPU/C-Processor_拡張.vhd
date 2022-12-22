@@ -54,7 +54,9 @@ architecture logic of CProcessor is
     loadFC    : in  std_logic;
 
     clock     : in  std_logic;
-    reset     : in  std_logic
+    reset     : in  std_logic;
+
+    selMuxDOutAdd : in  std_logic
     );
   end component;
   
@@ -93,7 +95,9 @@ architecture logic of CProcessor is
     write     : out std_logic;
 
     clock     : in  std_logic;
-    reset     : in  std_logic 
+    reset     : in  std_logic;
+
+    selMuxDOutAdd : out  std_logic 
     );
   end component;
 
@@ -124,6 +128,8 @@ signal    loadRegC  : std_logic;
 signal    modeALU   : std_logic_vector (3 downto 0);
 signal    loadFC  : std_logic;
 signal    loadFZ  : std_logic;
+
+signal    selMuxDOutAdd : std_logic;
 
 begin    -- logic
 
@@ -161,7 +167,11 @@ path : DataPath
     modeALU    => modeALU,
 
     clock     => clock,
-    reset     => reset
+    reset     => reset,
+
+
+    selMuxDOutAdd => selMuxDOutAdd   -----
+
   );
 
 ctrl : Controler
@@ -200,7 +210,12 @@ loadFZ    => loadFZ,
 reset     => reset,
 
     read      => read,
-    write     => write
+    write     => write,
+
+
+    selMuxDOutAdd => selMuxDOutAdd   -----
+
+
   );
 
 end logic;

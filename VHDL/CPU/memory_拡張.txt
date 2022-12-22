@@ -1,0 +1,16 @@
+0000    d0      -- SETIXH
+0001    80      -- 
+0002	d1      -- SETIXL
+0003	00	-- 
+0004    d8      -- LDIA
+0005    03      -- 
+0006    d9      -- LDIB
+0007    05      -- 
+0008    80      -- ADDA
+0009    90      -- ADDB
+000a    85      -- INCA
+000b    9a      -- DECB
+000c    84      -- NOTA
+000d    92      -- ANDB
+000e    74      -- MOVAB
+000f    80      -- ADDA

@@ -16,6 +16,8 @@ library IEEE;
 use IEEE.std_logic_1164.all;
 use ieee.std_logic_arith.all;
 
+use ieee.numeric_std.all;  
+
 entity DFF is
   port (
     d   : in  std_logic;
@@ -482,7 +484,7 @@ end rtl;
 
 Library IEEE;
 use IEEE.std_logic_1164.all;
-use IEEE.std_logic_arith.all;
+use ieee.numeric_std.all; 
 
 entity ALU08 is
   port (
@@ -527,21 +529,7 @@ inA <= a       when mode = "0000"   or      -- (a + b)
      
                     mode = "0110"  else     -- (a - 1)
 
-
-
-      "00000000"      when mode = "1100"  else     -- MOVEAB
-
-       b            when mode = "1101"  else     -- MOVEBA
-
-       --sh_left(a,to_integer(b))  when mode = "1110"  else     -- SLL
-
-       --a sll b  when mode = "1110"  else     -- SLL
-
-       --sh_right(a,to_integer(b)) when mode = "1111"  else     -- SRL
-
-       '0' & a(7 downto 1)  when mode = "1111"  else     -- SRL
-
-       b;                                        -- (b+1, b-1)
+       b;                                   -- (b+1, b-1)
 
  
 
@@ -552,15 +540,6 @@ inB <= b            when mode = "0000"   else       -- (a + b)
      "00000001"     when mode = "1001"   or  mode = "0101"   else    -- (b + 1),(a + 1)
 
      "11111111"     when mode = "1010"   or  mode = "0110"   else    -- (b - 1), (a - 1)
-
-
-      a             when mode = "1100"  else     -- MOVEAB
-
-     "00000000"      when mode = "1101"  else     -- MOVEBA
-
-     "00000000"     when mode = "1110"  else     -- SLL
-
-     "00000000"     when mode = "1111"  else     -- SRL
 
      "00000000"; 
                     
@@ -581,8 +560,55 @@ zout <= '1' when (result = "00000000")
             else
         '0';
 
-cout <= cout_tmp;
+--cout <=  a(8-b) when mode = "1100"  else  --SLA
 
+ --        a(7-b) when mode = "1101"  else  --SRA
+
+ --        a(b-1) when mode = "1110"  else   --SLL
+
+ --        a(b-1) when mode = "1111"  else   --SRL   
+
+ --        cout_tmp;     ----change
+
+
+cout <= a(7) when ( mode = "1110" and b ="00000001" ) else   --SLL
+        a(6) when ( mode = "1110" and b ="00000010" ) else
+        a(5) when ( mode = "1110" and b ="00000011" ) else
+        a(4) when ( mode = "1110" and b ="00000100" ) else
+        a(3) when ( mode = "1110" and b ="00000101" ) else
+        a(2) when ( mode = "1110" and b ="00000110" ) else
+        a(1) when ( mode = "1110" and b ="00000111" ) else
+        a(0) when ( mode = "1110" and b ="00001000" ) else
+        '0'  when ( mode = "1110" and b >"00001000" ) else
+
+        a(6) when ( mode = "1100" and b ="00000001" ) else   --SLA
+        a(5) when ( mode = "1100" and b ="00000010" ) else
+        a(4) when ( mode = "1100" and b ="00000011" ) else
+        a(3) when ( mode = "1100" and b ="00000100" ) else
+        a(2) when ( mode = "1100" and b ="00000101" ) else
+        a(1) when ( mode = "1100" and b ="00000110" ) else
+        a(0) when ( mode = "1100" and b ="00000111" ) else
+        '0'  when ( mode = "1100" and b >="00001000" ) else
+
+        a(7) when ( mode = "1111" and b ="00001000" ) else   --SrL
+        a(6) when ( mode = "1111" and b ="00000111" ) else
+        a(5) when ( mode = "1111" and b ="00000110" ) else
+        a(4) when ( mode = "1111" and b ="00000101" ) else
+        a(3) when ( mode = "1111" and b ="00000100" ) else
+        a(2) when ( mode = "1111" and b ="00000011" ) else
+        a(1) when ( mode = "1111" and b ="00000010" ) else
+        a(0) when ( mode = "1111" and b ="00000001" ) else
+        '0'  when ( mode = "1111" and b >"00001000" ) else
+
+        a(6) when ( mode = "1101" and b ="00000111" ) else  --sra
+        a(5) when ( mode = "1101" and b ="00000110" ) else
+        a(4) when ( mode = "1101" and b ="00000101" ) else
+        a(3) when ( mode = "1101" and b ="00000100" ) else
+        a(2) when ( mode = "1101" and b ="00000011" ) else
+        a(1) when ( mode = "1101" and b ="00000010" ) else
+        a(0) when ( mode = "1101" and b ="00000001" ) else
+        '0'  when ( mode = "1101" and b >="00001000" ) else
+        cout_tmp;
 
 result_logic <= (not a)   when mode = "0100" else -- ( not a )
 
@@ -592,19 +618,25 @@ result_logic <= (not a)   when mode = "0100" else -- ( not a )
 
                 (a or b )   when mode = "0011" else -- ( a or  b )
 
+
+                a(7) & std_logic_vector(SHIFT_LEFT(signed(a(6 downto 0)), to_integer(unsigned(b))))    when mode = "1100"  else  --SLA
+
+                std_logic_vector(SHIFT_RIGHT(signed(a), to_integer(unsigned(b))))   when mode = "1101"  else  --SRA
+
+                std_logic_vector(SHIFT_LEFT(unsigned(a), to_integer(unsigned(b))))  when mode = "1110"  else   --SLL
+
+                std_logic_vector(SHIFT_RIGHT(unsigned(a), to_integer(unsigned(b)))) when mode = "1111"  else   --SRL               
+
                 "00000000";
 
 
 
-
-
-
-result <= result_adder when mode = "0000" or -- (not a)
-                            mode = "0001" or -- (not b)
-                            mode = "1001" or -- (a and b)
-                            mode = "0101" or -- (a or b)
-                            mode = "1010" or -- (a and b)
-                            mode = "0110"    -- (a or b)
+result <= result_adder when mode = "0000" or 
+                            mode = "0001" or 
+                            mode = "1001" or 
+                            mode = "0101" or 
+                            mode = "1010" or 
+                            mode = "0110"    
                        else
          
           result_logic; 

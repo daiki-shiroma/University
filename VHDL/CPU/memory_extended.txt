@@ -18,6 +18,7 @@
 
 0010    02	-- 
 0011    f0	-- STDA  8002にAの値を保存
+
 0012    86      -- DECA
 0013    85      -- INCA
 0014    50      -- JPZ, z=1
@@ -192,18 +193,23 @@
 010a    d1      -- SETIXL     --result
 010b    02	-- 
 010c    e0      -- LDDA 
-010d    60      -- JP
-010e    03 
-010f    00      -- farway
+010d    d1      -- SETIXL     --result
+010e    04	-- 
+010f    f8      -- STDi
+0110    00 
+0111    60      -- JP
+0112    03 
+0113    00      -- farway
 
-0110    d1      -- SETIXL     -- ans b is 0
-0111    03	-- 
-0112    e0      -- LDDA  
+0114    d1      -- SETIXL     -- ans b is 0
+0115    03	-- 
+0116    e0      -- LDDA  
 
-8000    00      -- 
-8001    00      -- temp
-8002    00　　　 --STDA save 
-8003    00      --STDB save 
-8004    00      --signal
+8000    00      -- notused
+8001    00      -- temp 
+8002    00　　　 -- STDA save , answer
+8003    00      -- STDB save 
+8004    00      -- signal
+
 fffe    00      -- push
 ffff    00      -- dicide_number

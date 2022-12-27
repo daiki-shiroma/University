@@ -349,7 +349,7 @@ end FullAdder;
 
 architecture rtl of FullAdder is
 begin 
-  s <= x xor y xor cin;
+  s <= x xor y xor cin;    ----------------------------------
   c <= (x and y) or ((x or y) and cin);
 end rtl;
 
@@ -538,7 +538,7 @@ inB <= b            when mode = "0000"   else       -- (a + b)
      "00000000";                     
            
 cin_tmp <=   '1'  when mode = "0001" else
-             cin;
+             cin;  ---cin defalt is 0
 
 adder : RCAdder08
   port map (

@@ -22,11 +22,13 @@ public class Compiler {
 	StringBuilder sb = new StringBuilder();
 	StringBuilder subRoutineBuff = new StringBuilder();
 	int subRoutineBuffCount=0;
+	int pushcounter=0;
+	int varStackPoint=0;
 	
 	
 	public static void main(final String[] args) {
 		// Compilerを実行してcasを生成する
-		new Compiler().run("data/ts/normal02.ts", "tmp/out.cas");
+		new Compiler().run("data/ts/normal04.ts", "tmp/out.cas");
 
 		// 上記casを，CASLアセンブラ & COMETシミュレータで実行する
 		CaslSimulator.run("tmp/out.cas", "tmp/out.ans");
@@ -144,11 +146,11 @@ public class Compiler {
              // addvarlist
              int countVarlist=0;
              for (int i=0; variable[i][0]!=null; i++) {
-            	 System.out.print(variable[i][1]);
+            	/* System.out.print(variable[i][1]);
             	 System.out.print(variable[i][2]);
             	 System.out.print(variable[i][3]);
             	 System.out.print(variable[i][4]);
-            	 System.out.println(variable[i][5]);
+            	 System.out.println(variable[i][5]);*/
   
             	 if (variable[i][5]!=null) {
             		 countVarlist= countVarlist +Integer.parseInt(variable[i][5]) - Integer.parseInt(variable[i][4]) + 1 ;
@@ -220,6 +222,25 @@ public class Compiler {
 		variable[index][1]=temp;
 
 		if(arrayCheck(temp))arrayflag=1;
+		
+		//add
+		/* for (int i=0; variable[i][0]!=null; i++) {
+        
+         	 if (str[0].equals(variable[i][1])) { //scopeに判定も追加すべき
+         		 
+         		varStackPoint+=i;
+         		 System.out.println(varStackPoint);
+         		break;	 
+         	 }
+          }*/
+		
+		//add
+		
+		
+		
+		
+		
+		
 
 		str = scanner.nextLine().split("\t");
 
@@ -342,7 +363,7 @@ public class Compiler {
 			}
 		}
 
-		else if (str[1].equals("SASSIGN")) {
+		else if (str[1].equals("SASSIGN")) { //:=
 			if (arrayflag==1) {
 				errorType=1;
 				return false;
@@ -362,8 +383,40 @@ public class Compiler {
 				str = scanner.nextLine().split("\t");
 				if (str[1].equals("SSEMICOLON"))return true;
 			}
-			else {
+			else {			
+				
 				if (str[1].equals("SIDENTIFIER") ) {
+					//arrayの場合変わる可能性あり
+					 for (int i=0; variable[i][0]!=null; i++) {
+			            	
+			            	 if (str[0].equals(variable[i][1])) {
+			            		//varのadressを取得		            		 
+			            		sb.append("\t"+"LD"+"\t");
+			     				sb.append("GR3,"+"\t");
+			     				sb.append("="+i+"\n");
+			     			
+			            		//LDでGR1に読み出し
+			     				sb.append("\t"+"LD"+"\t");
+			     				sb.append("GR1,"+"\t");
+			     				sb.append("VAR,"+"\t");
+			     				sb.append("GR3"+"\n");	
+			     				
+			            		//GR1の内容をpush
+			     				sb.append("\t"+"PUSH"+"\t");
+			     				sb.append("0,"+"\t");
+			     				sb.append("GR1"+"\n");
+			 
+			     				
+			            		 
+			            	 }
+			            	
+			             }
+					
+					
+					
+					
+					
+					
 					String varType=varTypeCheck(temp);
 					if ((varType!=null)&&(varType.equals("integer")||(varType.equals("char")))) {
 						if(substitutionTypeCheck(temp,substitution,varType)) {}
@@ -373,7 +426,45 @@ public class Compiler {
 						}
 					}
 				}
-				if (calculation(scanner)) return true;
+				if (calculation(scanner)) {
+					
+					while(pushcounter>1) {
+						
+						sb.append("\t"+"POP"+"\t");
+						sb.append("GR2"+"\n");
+						
+						sb.append("\t"+"POP"+"\t");
+						sb.append("GR1"+"\n");
+						
+						//演算子によって変える
+						sb.append("\t"+"ADDA"+"\t");
+						sb.append("GR1,"+"\t");
+						sb.append("GR2"+"\n");	
+						
+						sb.append("\t"+"PUSH"+"\t");
+						sb.append("0,"+"\t");
+						sb.append("GR1"+"\n");
+						
+						
+						pushcounter--;
+					}
+					
+					pushcounter=0;
+				
+					sb.append("\t"+"LD"+"\t");
+					sb.append("GR2,"+"\t"); 
+					sb.append("="+varStackPoint+"\n"); //変数の順番によって=0を変える必要あり
+					
+					varStackPoint=0;
+					
+					sb.append("\t"+"POP"+"\t");
+					sb.append("GR1"+"\n");
+					
+					sb.append("\t"+"ST"+"\t");
+					sb.append("GR1,"+"\t");
+					sb.append("VAR,"+"\t");
+					sb.append("GR2"+"\n");	
+					return true;}
 			}
 		}
 
@@ -409,6 +500,28 @@ public class Compiler {
 			if ((flag==1)&&(str[1].equals("SSEMICOLON")|| (str[1].equals("SRPAREN"))||(str[1].equals("SRBRACKET")))) return true; 
 
 			if (str[1].equals("SCONSTANT")) {
+				
+				//System.out.println(str[0]);
+				
+				pushcounter++;
+				
+				sb.append("\t"+"PUSH"+"\t");
+				sb.append(Integer.parseInt(str[0])+"\n");
+				
+				/*sb.append("\t"+"LD"+"\t");
+				sb.append("GR2,"+"\t");
+				sb.append("=0"+"\n");
+				
+				sb.append("\t"+"POP"+"\t");
+				sb.append("GR1"+"\n");
+				
+				sb.append("\t"+"ST"+"\t");
+				sb.append("GR1,"+"\t");
+				sb.append("VAR,"+"\t");
+				sb.append("GR2"+"\n");	*/
+				
+				
+				
 				integerType=1;
 				if ((integerType+charType+stringType+booleanType)>1) {
 					errorType=1;
@@ -494,12 +607,12 @@ public class Compiler {
 		int something=0;
 		int SLbracketflag=0;
 		String temp;
-		if(str[1].equals("SLBRACKET"))SLbracketflag=1;
+		if(str[1].equals("SLBRACKET"))SLbracketflag=1; //[
 
 		str = scanner.nextLine().split("\t");
 
 		while(true) {
-			if (str[1].equals("SLPAREN")||(str[1].equals("SLBRACKET"))) {
+			if (str[1].equals("SLPAREN")||(str[1].equals("SLBRACKET"))) {//SLBRACKET=[
 				something=1;
 				if (Brackets(scanner)) str = scanner.nextLine().split("\t");
 				else break;
@@ -513,6 +626,28 @@ public class Compiler {
 				}
 				something=1;
 				temp=str[0];
+				
+				
+				
+				
+				
+				
+				
+				//array stack address
+				if (str[1].equals("SCONSTANT")) {
+					varStackPoint+=Integer.parseInt(temp);
+					//sb.append("\t"+"PUSH"+"\t");
+					//sb.append(varStackPoint+"\n");
+				}
+				
+				
+				
+				
+				
+				
+				
+				
+				
 				str = scanner.nextLine().split("\t");
 
 				if (str[1].equals("SCOMMA")) { 
@@ -593,7 +728,12 @@ public class Compiler {
 			if (str[1].equals("STRUE") || str[1].equals("SFALSE") || str[1].equals("SAND") 
 					|| str[1].equals("SOR") ) return true;
 
-			if (str[1].equals("SRPAREN") || str[1].equals("SRBRACKET")) return true;
+			if (str[1].equals("SRPAREN") || str[1].equals("SRBRACKET")) {
+				sb.append("\t"+"LD"+"\t");
+				sb.append("GR2,"+"\t");
+				sb.append("="+varStackPoint+"\n");
+				return true;
+				}
 
 			if (str[1].equals("SEQUAL") || str[1].equals("SNOTEQUAL") || 
 					str[1].equals("SLESS") || str[1].equals("SLESSEQUAL")||
@@ -792,7 +932,7 @@ public class Compiler {
 	}
 
 	public boolean SWRITELN(Scanner scanner) {
-		
+		int block=0;
 		str = scanner.nextLine().split("\t");
 		if (str[1].equals("SLPAREN")) {
 			str = scanner.nextLine().split("\t");
@@ -838,7 +978,50 @@ public class Compiler {
 						sb.append("\t"+"CALL"+"\t");
 						sb.append("WRTLN"+"\n");
 						
+						block=1;
+				
+					}
+					
+					if (str[1].equals("SIDENTIFIER")) { //arrayは除くべき, 関数arrayCheck
 						
+						if( !arrayCheck(str[0])) {
+							sb.append("\t"+"LD"+"\t");
+							sb.append("GR2,"+"\t");
+							sb.append("=0"+"\n"); //0とは限らない, arrayの場合は変わる
+							
+							sb.append("\t"+"LD"+"\t");
+							sb.append("GR1,"+"\t");
+							sb.append("VAR,"+"\t");
+							sb.append("GR2"+"\n");
+							
+							sb.append("\t"+"PUSH"+"\t");
+							sb.append("0,"+"\t");
+							sb.append("GR1"+"\n");
+							
+							
+							sb.append("\t"+"POP"+"\t");
+							sb.append("GR2"+"\n");
+							
+							sb.append("\t"+"CALL"+"\t");
+							sb.append("WRTINT"+"\n");
+							
+							sb.append("\t"+"CALL"+"\t");
+							sb.append("WRTLN"+"\n");
+							
+							block=1;
+						}
+						
+						else {							
+							for (int i=0; variable[i][0]!=null; i++) {
+				         	 if (str[0].equals(variable[i][1])) { //scopeに判定も追加すべき
+				         		varStackPoint=i;
+				         		varStackPoint--;
+				         		//System.out.println(varStackPoint);
+				         		break;	 
+				         	 }
+				          }
+						}
+							
 					}
 					
 					
@@ -853,9 +1036,49 @@ public class Compiler {
 					if (str[1].equals("SCOMMA")) {
 						str = scanner.nextLine().split("\t");
 						
+						if (block!=1) {
+						sb.append("\t"+"LD"+"\t");
+						sb.append("GR1,"+"\t");
+						sb.append("VAR,"+"\t");
+						sb.append("GR2"+"\n");
+						
+						sb.append("\t"+"PUSH"+"\t");
+						sb.append("0,"+"\t");
+						sb.append("GR1"+"\n");
+						
+						
+						sb.append("\t"+"POP"+"\t");
+						sb.append("GR2"+"\n");
+						
+						sb.append("\t"+"CALL"+"\t");
+						sb.append("WRTINT"+"\n");
+						
+						sb.append("\t"+"CALL"+"\t");
+						sb.append("WRTLN"+"\n");
+						}
+						
 					}
 					if (str[1].equals("SRPAREN")) {
-						
+						if (block!=1) {
+							sb.append("\t"+"LD"+"\t");
+							sb.append("GR1,"+"\t");
+							sb.append("VAR,"+"\t");
+							sb.append("GR2"+"\n");
+							
+							sb.append("\t"+"PUSH"+"\t");
+							sb.append("0,"+"\t");
+							sb.append("GR1"+"\n");
+							
+							
+							sb.append("\t"+"POP"+"\t");
+							sb.append("GR2"+"\n");
+							
+							sb.append("\t"+"CALL"+"\t");
+							sb.append("WRTINT"+"\n");
+							
+							sb.append("\t"+"CALL"+"\t");
+							sb.append("WRTLN"+"\n");
+							}
 						return true;
 					}
 				}

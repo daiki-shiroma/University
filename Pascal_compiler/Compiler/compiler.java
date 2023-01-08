@@ -68,8 +68,8 @@ public class Compiler {
 							str = scanner.nextLine().split("\t");
 
 							if ((str[1].equals("SEND")) &&(!scope.equals("global"))) {
+								sbForProc.append("\t"+"RET"+"\n");
 								scope="global";
-								
 							}
 
 							if (str[1].equals("SVAR")) {
@@ -92,6 +92,7 @@ public class Compiler {
 							}
 							if (str[1].equals("SDOT")) {
 								sb.append("\t"+"RET"+"\n");
+								sb.append(sbForProc);
 								flag=1;
 								grammerCorrect();
 							}
@@ -141,12 +142,8 @@ public class Compiler {
 
 
 			pw.print(sb);
-			
-			
-			
-			sb.append(sbForProc);
-			sbForProc.setLength(0);
-			
+
+
 
 			int countVarlist=0;
 			for (int i=0; variable[i][0]!=null; i++) countVarlist=i+1;
@@ -204,7 +201,7 @@ public class Compiler {
 	}
 
 	public boolean SIDENTIFIER(Scanner scanner, String scope) {
-		
+
 		int flag=0;
 		int arrayflag=0;
 		String temp,temp2;
@@ -247,15 +244,15 @@ public class Compiler {
 				sb.append("TRUE"+comparisonOperatorCounter+"\t");
 				sb.append("NOP"+"\n");
 			}
-			
+
 			else {
 				sbForProc.append("TRUE"+comparisonOperatorCounter+"\t");
 				sbForProc.append("NOP"+"\n");
 			}
-			
+
 			insideWhile++;
 		}
-		
+
 
 		str = scanner.nextLine().split("\t");
 
@@ -400,7 +397,7 @@ public class Compiler {
 		}
 
 		else if (str[1].equals("SASSIGN")) { //:=
-		
+
 
 			//:= flag
 			sassignFlag=1;
@@ -409,59 +406,59 @@ public class Compiler {
 				return false;
 			}
 			str = scanner.nextLine().split("\t");
-			
+
 			String substitution=str[0];
 			String substitutionType=str[1];			
 			if (str[1].equals("SBOOLEAN")|| str[1].equals("STRUE") ||str[1].equals("SFALSE")||str[1].equals("SSTRING") ) {
-			
+
 				if(scope.equals("global")) {
 					if(str[1].equals("STRUE")) {
 						sb.append("\t"+"PUSH"+"\t");
 						sb.append("#0000"+"\n");
 					}
-					
+
 					if(str[1].equals("SFALSE")) {
 						sb.append("\t"+"PUSH"+"\t");
 						sb.append("#FFFF"+"\n");
 					}
-					
+
 					if(str[1].equals("SSTRING")) {
 						sb.append("\t"+"LD"+"\t");
 						sb.append("GR1, "+"\t");
 						sb.append("="+str[0]+"\n");
-						
+
 						sb.append("\t"+"PUSH"+"\t");
 						sb.append("0, "+"\t");
 						sb.append("GR1"+"\n");
 					}
 				}
-				
+
 				else {
 					if(str[1].equals("STRUE")) {
 						sbForProc.append("\t"+"PUSH"+"\t");
 						sbForProc.append("#0000"+"\n");
 					}
-					
+
 					if(str[1].equals("SFALSE")) {
 						sbForProc.append("\t"+"PUSH"+"\t");
 						sbForProc.append("#FFFF"+"\n");
 					}
-					
+
 					if(str[1].equals("SSTRING")) {
 						sbForProc.append("\t"+"LD"+"\t");
 						sbForProc.append("GR1, "+"\t");
 						sbForProc.append("="+str[0]+"\n");
-						
+
 						sbForProc.append("\t"+"PUSH"+"\t");
 						sbForProc.append("0, "+"\t");
 						sbForProc.append("GR1"+"\n");
 					}
 				}
 
-				
-				
-				
-				
+
+
+
+
 				if (!temp.equals(":=")) {
 					if(substitutionTypeCheck(temp,substitution,substitutionType)) {
 						//variable[i][5]に代入
@@ -474,14 +471,16 @@ public class Compiler {
 				}
 				temp=str[0];
 				str = scanner.nextLine().split("\t");
-				
+
 				if (str[1].equals("SSEMICOLON")) {
-					sb.append(sbsub);
+					if(scope.equals("global")) sb.append(sbsub);
+					else sbForProc.append(sbsub);
+
 					sbsub.setLength(0);
 					varStackPoint=0;
 					return true;
 				}
-				
+
 			}
 			else {			
 
@@ -500,12 +499,13 @@ public class Compiler {
 					}
 
 				}
-				
+
 
 
 				if (calculation(scanner)) {		
 
-					sb.append(sbsub);
+					if(scope.equals("global")) sb.append(sbsub);
+					else sbForProc.append(sbsub);
 
 					sbsub.setLength(0);
 					varStackPoint=0;
@@ -520,9 +520,12 @@ public class Compiler {
 			if (procedureCheck(temp)) {
 				sb.append("\t"+"CALL"+"\t");
 				sb.append("PROC");
-				sb.append(procCounter+"\n");
+				sb.append("0\n");
+				//procCounterではなく, globalでない何個目の変数か
 				
-				procCounter++;
+				//sb.append(procCounter+"\n");
+				//procCounter++;
+				
 				return true;
 			}
 			else errorType=1;
@@ -531,7 +534,7 @@ public class Compiler {
 	}
 
 	public boolean calculation(Scanner scanner) {
-		
+
 		int flag=0;
 		int integerType=0;
 		int charType=0;
@@ -581,7 +584,7 @@ public class Compiler {
 			}
 
 			else if (str[1].equals("SIDENTIFIER")) {
-				
+
 				/////
 				result=changeResult(operatortype, result);
 				variable[varStackPoint][5]=String.valueOf(result);
@@ -622,8 +625,8 @@ public class Compiler {
 			}
 
 			else if (str[1].equals("SSTRING")) {
-				
-				
+
+
 				stringType=1;
 				if ((integerType+charType+stringType+booleanType)>1) {
 					errorType=1;
@@ -644,11 +647,7 @@ public class Compiler {
 					return true; 
 				}
 			}
-			
-			/*else if( (str[1].equals("SCHAR"))) {
-				System.out.println(str[0]+str[3]);
 
-			}*/
 
 			else if (str[1].equals("STRUE")) {
 				sb.append("\t"+"PUSH"+"\t");
@@ -709,21 +708,34 @@ public class Compiler {
 		if(str[1].equals("SEQUAL")) {
 			comparisonOperator=1;
 			if (notflag==1) {
-				sb.append("\t"+"POP"+"\t");
-				sb.append("GR1"+"\n");
-				
-				sb.append("\t"+"XOR"+"\t");
-				sb.append("GR1,"+"\t");
-				sb.append("=#FFFF"+"\n");
-				
-				sb.append("\t"+"PUSH"+"\t");
-				sb.append("0,"+"\t");
-				sb.append("GR1"+"\n");
-				
 
+				if(scope.equals("global")) {
+					sb.append("\t"+"POP"+"\t");
+					sb.append("GR1"+"\n");
+
+					sb.append("\t"+"XOR"+"\t");
+					sb.append("GR1,"+"\t");
+					sb.append("=#FFFF"+"\n");
+
+					sb.append("\t"+"PUSH"+"\t");
+					sb.append("0,"+"\t");
+					sb.append("GR1"+"\n");
+				}
+				else {
+					sbForProc.append("\t"+"POP"+"\t");
+					sbForProc.append("GR1"+"\n");
+
+					sbForProc.append("\t"+"XOR"+"\t");
+					sbForProc.append("GR1,"+"\t");
+					sbForProc.append("=#FFFF"+"\n");
+
+					sbForProc.append("\t"+"PUSH"+"\t");
+					sbForProc.append("0,"+"\t");
+					sbForProc.append("GR1"+"\n");
+				}
 			}
 			notflag=0;
-			
+
 			return true;
 		}
 		if(str[1].equals("SNOTEQUAL")) {
@@ -760,17 +772,33 @@ public class Compiler {
 		}
 
 		System.out.println(str[0]);
-		
+
 		if (str[1].equals("STRUE") || str[1].equals("SFALSE") || str[1].equals("SAND") 
 				|| str[1].equals("SOR") || str[1].equals("SNOT")) {
+			
+		
 
 			if(str[1].equals("STRUE")) {
-				sb.append("\t"+"PUSH"+"\t");
-				sb.append("#0000"+"\n");
+				if(scope.equals("global")) {
+					sb.append("\t"+"PUSH"+"\t");
+					sb.append("#0000"+"\n");
+				}
+				else {
+					sbForProc.append("\t"+"PUSH"+"\t");
+					sbForProc.append("#0000"+"\n");
+				}
+				
 			}
 			if(str[1].equals("SFALSE")) {
-				sb.append("\t"+"PUSH"+"\t");
-				sb.append("#FFFF"+"\n");
+				if(scope.equals("global")) {
+					sb.append("\t"+"PUSH"+"\t");
+					sb.append("#FFFF"+"\n");
+				}
+				else {
+					sbForProc.append("\t"+"PUSH"+"\t");
+					sbForProc.append("#FFFF"+"\n");
+				}
+				
 			}
 
 			return true;
@@ -809,12 +837,8 @@ public class Compiler {
 
 				if(arrayreferFlag==1) {
 					if (str[1].equals("SCONSTANT")) {
-
 						sbsub.append("\t"+"PUSH"+"\t");
 						sbsub.append(Integer.parseInt(str[0])+"\n");
-
-
-						
 					}
 
 
@@ -834,8 +858,6 @@ public class Compiler {
 								sbsub.append("\t"+"PUSH"+"\t");
 								sbsub.append("0,\t");
 								sbsub.append("GR1\n");
-
-							
 								break;
 							}
 						}
@@ -948,9 +970,7 @@ public class Compiler {
 				else {
 					sbsub.append("\t"+"POP"+"\t");
 					sbsub.append("GR2"+"\n");
-
 				}
-
 
 				return true;
 			}
@@ -1031,8 +1051,15 @@ public class Compiler {
 	}
 
 	public boolean SWHILE(Scanner scanner) {
-		sb.append("LOOP"+whileLoopCounter+"\t");
-		sb.append("NOP"+"\n");
+		if(scope.equals("global")) {
+			sb.append("LOOP"+whileLoopCounter+"\t");
+			sb.append("NOP"+"\n");
+		}
+		else {
+			sbForProc.append("LOOP"+whileLoopCounter+"\t");
+			sbForProc.append("NOP"+"\n");
+		}
+	
 		whileLoopCounter++;
 		if (conditionalExpression(scanner)) {
 			str = scanner.nextLine().split("\t");
@@ -1063,18 +1090,22 @@ public class Compiler {
 					if (str[1].equals("SEND")) {
 						str = scanner.nextLine().split("\t");
 						insideWhile=0;
-
-						sb.append("\t"+"JUMP"+"\t"+"LOOP"+comparisonOperatorCounter+"\n");
-
-
-						sb.append("ENDLOOP"+comparisonOperatorCounter+"\t");
-						sb.append("NOP"+"\n");
+						if(scope.equals("global")) {
+							sb.append("\t"+"JUMP"+"\t"+"LOOP"+comparisonOperatorCounter+"\n");
+							sb.append("ENDLOOP"+comparisonOperatorCounter+"\t");
+							sb.append("NOP"+"\n");
+						}
+						
+						else {
+							sbForProc.append("\t"+"JUMP"+"\t"+"LOOP"+comparisonOperatorCounter+"\n");
+							sbForProc.append("ENDLOOP"+comparisonOperatorCounter+"\t");
+							sbForProc.append("NOP"+"\n");
+						}
 						break; 
 					}
 				}
 
 				if (str[1].equals("SSEMICOLON")) {
-
 					return true; 
 				}
 			}
@@ -1085,15 +1116,22 @@ public class Compiler {
 	public boolean SIF(Scanner scanner) {
 
 		if (conditionalExpression(scanner)) {
-	
+
 			str = scanner.nextLine().split("\t");
 
 			if (str[1].equals("SBEGIN")) {
-				
+				if(scope.equals("global")) {
 					sb.append("TRUE"+comparisonOperatorCounter+"\t");
 					sb.append("NOP"+"\n");
-								
+				}
 				
+				else {
+					sbForProc.append("TRUE"+comparisonOperatorCounter+"\t");
+					sbForProc.append("NOP"+"\n");
+				}
+				
+
+
 				while(scanner.hasNextLine()) {
 					str = scanner.nextLine().split("\t");
 
@@ -1119,19 +1157,34 @@ public class Compiler {
 					}
 				}
 				
-				sb.append("\t"+"JUMP"+"\t");
-				sb.append("ENDIF"+comparisonOperatorCounter+"\n");
-				
-				
-				sb.append("ELSE"+comparisonOperatorCounter+"\t");
-				sb.append("NOP"+"\n");
-
-				if (str[1].equals("SSEMICOLON")) {
-					sb.append("ENDIF"+comparisonOperatorCounter+"\t");
+				if(scope.equals("global")) {
+					sb.append("\t"+"JUMP"+"\t");
+					sb.append("ENDIF"+comparisonOperatorCounter+"\n");
+					sb.append("ELSE"+comparisonOperatorCounter+"\t");
 					sb.append("NOP"+"\n");
-					return true; 
 				}
 				
+				else {
+					sbForProc.append("\t"+"JUMP"+"\t");
+					sbForProc.append("ENDIF"+comparisonOperatorCounter+"\n");
+					sbForProc.append("ELSE"+comparisonOperatorCounter+"\t");
+					sbForProc.append("NOP"+"\n");
+				}
+
+				
+				if (str[1].equals("SSEMICOLON")) {
+					if(scope.equals("global")) {
+						sb.append("ENDIF"+comparisonOperatorCounter+"\t");
+						sb.append("NOP"+"\n");
+					}
+					else {
+						sbForProc.append("ENDIF"+comparisonOperatorCounter+"\t");
+						sbForProc.append("NOP"+"\n");
+					}
+					
+					return true; 
+				}
+
 				else if(str[1].equals("SELSE")) {
 					str = scanner.nextLine().split("\t");
 
@@ -1161,13 +1214,26 @@ public class Compiler {
 								break; 
 							}
 						}
-						sb.append("\t"+"JUMP"+"\t");
-						sb.append("ENDIF"+comparisonOperatorCounter+"\n");
+						if(scope.equals("global")) {
+							sb.append("\t"+"JUMP"+"\t");
+							sb.append("ENDIF"+comparisonOperatorCounter+"\n");
+						}
 						
+						else {
+							sbForProc.append("\t"+"JUMP"+"\t");
+							sbForProc.append("ENDIF"+comparisonOperatorCounter+"\n");
+						}
 						
+
 						if (str[1].equals("SSEMICOLON")) {
-							sb.append("ENDIF"+comparisonOperatorCounter+"\t");
-							sb.append("NOP"+"\n");
+							if(scope.equals("global")) {
+								sb.append("ENDIF"+comparisonOperatorCounter+"\t");
+								sb.append("NOP"+"\n");
+							}
+							else {
+								sbForProc.append("ENDIF"+comparisonOperatorCounter+"\t");
+								sbForProc.append("NOP"+"\n");
+							}		
 							return true; 
 						}
 					}
@@ -1178,6 +1244,10 @@ public class Compiler {
 	}
 
 	public boolean SPROCEDURE(Scanner scanner) {
+		
+		sbForProc.append("PROC"+procCounter+"\t");
+		sbForProc.append("NOP"+"\n");	
+		procCounter++;
 		str = scanner.nextLine().split("\t");
 		scope=str[0];
 
@@ -1214,36 +1284,71 @@ public class Compiler {
 						subRoutineBuffCount++;
 
 						int countStringlength=str[0].length()-2;
-						sb.append("\t"+"LD"+"\t");
-						sb.append("GR1,"+"\t");
-						sb.append("="+countStringlength+"\n");
+						
+						if(scope.equals("global")) {
+							sb.append("\t"+"LD"+"\t");
+							sb.append("GR1,"+"\t");
+							sb.append("="+countStringlength+"\n");
 
-						sb.append("\t"+"PUSH"+"\t");
-						sb.append("0,"+"\t");
-						sb.append("GR1"+"\n");
+							sb.append("\t"+"PUSH"+"\t");
+							sb.append("0,"+"\t");
+							sb.append("GR1"+"\n");
 
-						sb.append("\t"+"LAD"+"\t");
-						sb.append("GR2,"+"\t");
-						subRoutineBuffCount--;
-						sb.append("CHAR"+subRoutineBuffCount+"\n");
-						subRoutineBuffCount++;
+							sb.append("\t"+"LAD"+"\t");
+							sb.append("GR2,"+"\t");
+							subRoutineBuffCount--;
+							sb.append("CHAR"+subRoutineBuffCount+"\n");
+							subRoutineBuffCount++;
 
-						sb.append("\t"+"PUSH"+"\t");
-						sb.append("0,"+"\t");
-						sb.append("GR2"+"\n");
+							sb.append("\t"+"PUSH"+"\t");
+							sb.append("0,"+"\t");
+							sb.append("GR2"+"\n");
 
-						sb.append("\t"+"POP"+"\t");
-						sb.append("GR2"+"\n");
+							sb.append("\t"+"POP"+"\t");
+							sb.append("GR2"+"\n");
 
-						sb.append("\t"+"POP"+"\t");
-						sb.append("GR1"+"\n");
+							sb.append("\t"+"POP"+"\t");
+							sb.append("GR1"+"\n");
 
-						sb.append("\t"+"CALL"+"\t");
-						sb.append("WRTSTR"+"\n");
+							sb.append("\t"+"CALL"+"\t");
+							sb.append("WRTSTR"+"\n");
 
-						sb.append("\t"+"CALL"+"\t");
-						sb.append("WRTLN"+"\n");
+							sb.append("\t"+"CALL"+"\t");
+							sb.append("WRTLN"+"\n");
+						}
+						
+						else {
+							sbForProc.append("\t"+"LD"+"\t");
+							sbForProc.append("GR1,"+"\t");
+							sbForProc.append("="+countStringlength+"\n");
 
+							sbForProc.append("\t"+"PUSH"+"\t");
+							sbForProc.append("0,"+"\t");
+							sbForProc.append("GR1"+"\n");
+
+							sbForProc.append("\t"+"LAD"+"\t");
+							sbForProc.append("GR2,"+"\t");
+							subRoutineBuffCount--;
+							sbForProc.append("CHAR"+subRoutineBuffCount+"\n");
+							subRoutineBuffCount++;
+
+							sbForProc.append("\t"+"PUSH"+"\t");
+							sbForProc.append("0,"+"\t");
+							sbForProc.append("GR2"+"\n");
+
+							sbForProc.append("\t"+"POP"+"\t");
+							sbForProc.append("GR2"+"\n");
+
+							sbForProc.append("\t"+"POP"+"\t");
+							sbForProc.append("GR1"+"\n");
+
+							sbForProc.append("\t"+"CALL"+"\t");
+							sbForProc.append("WRTSTR"+"\n");
+
+							sbForProc.append("\t"+"CALL"+"\t");
+							sbForProc.append("WRTLN"+"\n");
+						}
+						
 						block=1;
 
 					}
@@ -1251,7 +1356,7 @@ public class Compiler {
 					if (str[1].equals("SIDENTIFIER")) { //arrayは除くべき, 関数arrayCheck
 
 						if( !arrayCheck(str[0])) {
-							
+
 							for (int i=0; variable[i][0]!=null; i++) {
 								if (str[0].equals(variable[i][1])) { //scopeに判定も追加すべき
 									varStackPoint=i;
@@ -1260,41 +1365,84 @@ public class Compiler {
 								}
 							}
 							
-							sb.append("\t"+"LD"+"\t");
-							sb.append("GR2,"+"\t");
-							sb.append("="+varStackPoint+"\n"); //0とは限らない, arrayの場合は変わる
+							if(scope.equals("global")) {
+								sb.append("\t"+"LD"+"\t");
+								sb.append("GR2,"+"\t");
+								sb.append("="+varStackPoint+"\n"); //0とは限らない, arrayの場合は変わる
 
-							sb.append("\t"+"LD"+"\t");
-							sb.append("GR1,"+"\t");
-							sb.append("VAR,"+"\t");
-							sb.append("GR2"+"\n");
+								sb.append("\t"+"LD"+"\t");
+								sb.append("GR1,"+"\t");
+								sb.append("VAR,"+"\t");
+								sb.append("GR2"+"\n");
 
-							sb.append("\t"+"PUSH"+"\t");
-							sb.append("0,"+"\t");
-							sb.append("GR1"+"\n");
+								sb.append("\t"+"PUSH"+"\t");
+								sb.append("0,"+"\t");
+								sb.append("GR1"+"\n");
+
+								sb.append("\t"+"POP"+"\t");
+								sb.append("GR2"+"\n");
+
+							}
+							
+							else {
+								sbForProc.append("\t"+"LD"+"\t");
+								sbForProc.append("GR2,"+"\t");
+								sbForProc.append("="+varStackPoint+"\n"); //0とは限らない, arrayの場合は変わる
+
+								sbForProc.append("\t"+"LD"+"\t");
+								sbForProc.append("GR1,"+"\t");
+								sbForProc.append("VAR,"+"\t");
+								sbForProc.append("GR2"+"\n");
+
+								sbForProc.append("\t"+"PUSH"+"\t");
+								sbForProc.append("0,"+"\t");
+								sbForProc.append("GR1"+"\n");
 
 
-							sb.append("\t"+"POP"+"\t");
-							sb.append("GR2"+"\n");
+								sbForProc.append("\t"+"POP"+"\t");
+								sbForProc.append("GR2"+"\n");
+
+							}
+
 							
 							String temp=varTypeCheck(str[0]);
-							
+
 							if(temp!=null) {
 								if(temp.equals("integer")) {
-									sb.append("\t"+"CALL"+"\t");
-									sb.append("WRTINT"+"\n");
+									if(scope.equals("global")) {
+										sb.append("\t"+"CALL"+"\t");
+										sb.append("WRTINT"+"\n");
+									}
+									else {
+										sbForProc.append("\t"+"CALL"+"\t");
+										sbForProc.append("WRTINT"+"\n");
+									}
+									
 								}
-								
+
 								else if (temp.equals("char")) {
-									sb.append("\t"+"CALL"+"\t");
-									sb.append("WRTCH"+"\n");
+									if(scope.equals("global")) {
+										sb.append("\t"+"CALL"+"\t");
+										sb.append("WRTCH"+"\n");
+									}
+									else {
+										sbForProc.append("\t"+"CALL"+"\t");
+										sbForProc.append("WRTCH"+"\n");
+									}
+									
 								}
 								else {}		
 							}
-							
 
-							sb.append("\t"+"CALL"+"\t");
-							sb.append("WRTLN"+"\n");
+							if(scope.equals("global")) {
+								sb.append("\t"+"CALL"+"\t");
+								sb.append("WRTLN"+"\n");
+							}
+							else {
+								sbForProc.append("\t"+"CALL"+"\t");
+								sbForProc.append("WRTLN"+"\n");
+							}
+							
 
 							block=1;
 						}
@@ -1321,60 +1469,105 @@ public class Compiler {
 						if (!Brackets(scanner)) return false;
 						else 	str = scanner.nextLine().split("\t");
 
-						sb.append(sbsub);
+						if(scope.equals("global")) sb.append(sbsub);
+						else sbForProc.append(sbsub);
+						
 						sbsub.setLength(0);
 						varStackPoint=0;
 						arrayreferFlag=0;
 					}
 
-
-
-
 					if (str[1].equals("SCOMMA")) {
 						str = scanner.nextLine().split("\t");
 
 						if (block!=1) {
-							sb.append("\t"+"LD"+"\t");
-							sb.append("GR1,"+"\t");
-							sb.append("VAR,"+"\t");
-							sb.append("GR2"+"\n");
+							if(scope.equals("global")) {
+								sb.append("\t"+"LD"+"\t");
+								sb.append("GR1,"+"\t");
+								sb.append("VAR,"+"\t");
+								sb.append("GR2"+"\n");
 
-							sb.append("\t"+"PUSH"+"\t");
-							sb.append("0,"+"\t");
-							sb.append("GR1"+"\n");
+								sb.append("\t"+"PUSH"+"\t");
+								sb.append("0,"+"\t");
+								sb.append("GR1"+"\n");
 
 
-							sb.append("\t"+"POP"+"\t");
-							sb.append("GR2"+"\n");
+								sb.append("\t"+"POP"+"\t");
+								sb.append("GR2"+"\n");
 
-							sb.append("\t"+"CALL"+"\t");
-							sb.append("WRTINT"+"\n");
+								sb.append("\t"+"CALL"+"\t");
+								sb.append("WRTINT"+"\n");
 
-							sb.append("\t"+"CALL"+"\t");
-							sb.append("WRTLN"+"\n");
+								sb.append("\t"+"CALL"+"\t");
+								sb.append("WRTLN"+"\n");
+							}
+							
+							else {
+								sbForProc.append("\t"+"LD"+"\t");
+								sbForProc.append("GR1,"+"\t");
+								sbForProc.append("VAR,"+"\t");
+								sbForProc.append("GR2"+"\n");
+
+								sbForProc.append("\t"+"PUSH"+"\t");
+								sbForProc.append("0,"+"\t");
+								sbForProc.append("GR1"+"\n");
+
+
+								sbForProc.append("\t"+"POP"+"\t");
+								sbForProc.append("GR2"+"\n");
+
+								sbForProc.append("\t"+"CALL"+"\t");
+								sbForProc.append("WRTINT"+"\n");
+
+								sbForProc.append("\t"+"CALL"+"\t");
+								sbForProc.append("WRTLN"+"\n");
+							}
+							
 						}
 
 					}
 					if (str[1].equals("SRPAREN")) {
 						if (block!=1) {
-							sb.append("\t"+"LD"+"\t");
-							sb.append("GR1,"+"\t");
-							sb.append("VAR,"+"\t");
-							sb.append("GR2"+"\n");
+							if(scope.equals("global")) {
+								sb.append("\t"+"LD"+"\t");
+								sb.append("GR1,"+"\t");
+								sb.append("VAR,"+"\t");
+								sb.append("GR2"+"\n");
 
-							sb.append("\t"+"PUSH"+"\t");
-							sb.append("0,"+"\t");
-							sb.append("GR1"+"\n");
+								sb.append("\t"+"PUSH"+"\t");
+								sb.append("0,"+"\t");
+								sb.append("GR1"+"\n");
 
 
-							sb.append("\t"+"POP"+"\t");
-							sb.append("GR2"+"\n");
+								sb.append("\t"+"POP"+"\t");
+								sb.append("GR2"+"\n");
 
-							sb.append("\t"+"CALL"+"\t");
-							sb.append("WRTINT"+"\n");
+								sb.append("\t"+"CALL"+"\t");
+								sb.append("WRTINT"+"\n");
 
-							sb.append("\t"+"CALL"+"\t");
-							sb.append("WRTLN"+"\n");
+								sb.append("\t"+"CALL"+"\t");
+								sb.append("WRTLN"+"\n");
+							}
+							else {
+								sbForProc.append("\t"+"LD"+"\t");
+								sbForProc.append("GR1,"+"\t");
+								sbForProc.append("VAR,"+"\t");
+								sbForProc.append("GR2"+"\n");
+
+								sbForProc.append("\t"+"PUSH"+"\t");
+								sbForProc.append("0,"+"\t");
+								sbForProc.append("GR1"+"\n");
+
+								sbForProc.append("\t"+"POP"+"\t");
+								sbForProc.append("GR2"+"\n");
+
+								sbForProc.append("\t"+"CALL"+"\t");
+								sbForProc.append("WRTINT"+"\n");
+
+								sbForProc.append("\t"+"CALL"+"\t");
+								sbForProc.append("WRTLN"+"\n");
+							}
+							
 						}
 						return true;
 					}
@@ -1484,18 +1677,35 @@ public class Compiler {
 				if (str[0].equals(variable[i][1])) {
 
 					if(sassignFlag==1) {
-						sb.append("\t"+"LD"+"\t");
-						sb.append("GR2,"+"\t");
-						sb.append("="+i+"\n");
+						if(scope.equals("global")) {
+							sb.append("\t"+"LD"+"\t");
+							sb.append("GR2,"+"\t");
+							sb.append("="+i+"\n");
 
-						sb.append("\t"+"LD"+"\t");
-						sb.append("GR1,"+"\t");
-						sb.append("VAR,"+"\t");
-						sb.append("GR2\n");
+							sb.append("\t"+"LD"+"\t");
+							sb.append("GR1,"+"\t");
+							sb.append("VAR,"+"\t");
+							sb.append("GR2\n");
 
-						sb.append("\t"+"PUSH"+"\t");
-						sb.append("0,"+"\t");
-						sb.append("GR1"+"\n");
+							sb.append("\t"+"PUSH"+"\t");
+							sb.append("0,"+"\t");
+							sb.append("GR1"+"\n");
+						}
+						
+						else {
+							sbForProc.append("\t"+"LD"+"\t");
+							sbForProc.append("GR2,"+"\t");
+							sbForProc.append("="+i+"\n");
+
+							sbForProc.append("\t"+"LD"+"\t");
+							sbForProc.append("GR1,"+"\t");
+							sbForProc.append("VAR,"+"\t");
+							sbForProc.append("GR2\n");
+
+							sbForProc.append("\t"+"PUSH"+"\t");
+							sbForProc.append("0,"+"\t");
+							sbForProc.append("GR1"+"\n");
+						}
 
 
 					}
@@ -1503,12 +1713,18 @@ public class Compiler {
 					else {
 						if(variable[i][5]!=null) {
 							temp=Integer.parseInt(variable[i][5]);
-							sb.append("\t"+"PUSH"+"\t");
-							sb.append(temp+"\n");
+							if(scope.equals("global")) {
+								sb.append("\t"+"PUSH"+"\t");
+								sb.append(temp+"\n");
+							}
+							else {
+								sbForProc.append("\t"+"PUSH"+"\t");
+								sbForProc.append(temp+"\n");
+							}
+							
 						}
 
 					}
-
 
 				}        	
 			}		
@@ -1516,8 +1732,15 @@ public class Compiler {
 
 		else {
 			temp=Integer.parseInt(str[0]);
-			sb.append("\t"+"PUSH"+"\t");
-			sb.append(temp+"\n");
+			if(scope.equals("global")) {
+				sb.append("\t"+"PUSH"+"\t");
+				sb.append(temp+"\n");
+			}
+			else {
+				sbForProc.append("\t"+"PUSH"+"\t");
+				sbForProc.append(temp+"\n");
+			}
+			
 		}
 
 
@@ -1525,72 +1748,131 @@ public class Compiler {
 		if (operatortype==0) nextresult=temp;
 
 		else {
-			sb.append("\t"+"POP"+"\t");
-			sb.append("GR2"+"\n");
+			if(scope.equals("global")) {
+				sb.append("\t"+"POP"+"\t");
+				sb.append("GR2"+"\n");
 
-			sb.append("\t"+"POP"+"\t");
-			sb.append("GR1"+"\n");
+				sb.append("\t"+"POP"+"\t");
+				sb.append("GR1"+"\n");
+			}
+			else {
+				sbForProc.append("\t"+"POP"+"\t");
+				sbForProc.append("GR2"+"\n");
+
+				sbForProc.append("\t"+"POP"+"\t");
+				sbForProc.append("GR1"+"\n");
+			}
+			
 
 			if (operatortype==1) {
+				if(scope.equals("global")) {
+					sb.append("\t"+"ADDA"+"\t");
+					sb.append("GR1,"+"\t");
+					sb.append("GR2"+"\n");	
 
-				sb.append("\t"+"ADDA"+"\t");
-				sb.append("GR1,"+"\t");
-				sb.append("GR2"+"\n");	
+					sb.append("\t"+"PUSH"+"\t");
+					sb.append("0,"+"\t");
+					sb.append("GR1"+"\n");	
+				}
+				
+				else {
+					sbForProc.append("\t"+"ADDA"+"\t");
+					sbForProc.append("GR1,"+"\t");
+					sbForProc.append("GR2"+"\n");	
 
-				sb.append("\t"+"PUSH"+"\t");
-				sb.append("0,"+"\t");
-				sb.append("GR1"+"\n");	
-
+					sbForProc.append("\t"+"PUSH"+"\t");
+					sbForProc.append("0,"+"\t");
+					sbForProc.append("GR1"+"\n");	
+				}
+				
 				nextresult=result+temp;
 			}
 
 
 			if (operatortype==2) {
+				if(scope.equals("global")) {
+					sb.append("\t"+"SUBA"+"\t");
+					sb.append("GR1,"+"\t");
+					sb.append("GR2"+"\n");	
 
-				sb.append("\t"+"SUBA"+"\t");
-				sb.append("GR1,"+"\t");
-				sb.append("GR2"+"\n");	
+					sb.append("\t"+"PUSH"+"\t");
+					sb.append("0,"+"\t");
+					sb.append("GR1"+"\n");	
+				}
+				
+				else {
+					sbForProc.append("\t"+"SUBA"+"\t");
+					sbForProc.append("GR1,"+"\t");
+					sbForProc.append("GR2"+"\n");	
 
-				sb.append("\t"+"PUSH"+"\t");
-				sb.append("0,"+"\t");
-				sb.append("GR1"+"\n");	
+					sbForProc.append("\t"+"PUSH"+"\t");
+					sbForProc.append("0,"+"\t");
+					sbForProc.append("GR1"+"\n");	
+				}		
 
 				nextresult=result-temp;
 			}
 
 			if (operatortype==3) {
+				if(scope.equals("global")) {
+					sb.append("\t"+"CALL"+"\t");
+					sb.append("MULT"+"\n");	
 
-				sb.append("\t"+"CALL"+"\t");
-				sb.append("MULT"+"\n");	
+					sb.append("\t"+"PUSH"+"\t");
+					sb.append("0,"+"\t");
+					sb.append("GR2"+"\n");	
+				}
+				else {
+					sbForProc.append("\t"+"CALL"+"\t");
+					sbForProc.append("MULT"+"\n");	
 
-				sb.append("\t"+"PUSH"+"\t");
-				sb.append("0,"+"\t");
-				sb.append("GR2"+"\n");	
-
+					sbForProc.append("\t"+"PUSH"+"\t");
+					sbForProc.append("0,"+"\t");
+					sbForProc.append("GR2"+"\n");	
+				}
+				
 				nextresult=result*temp;
 			}
 
 			if (operatortype==4) {
+				if(scope.equals("global")) {
+					sb.append("\t"+"CALL"+"\t");
+					sb.append("DIV"+"\n");
 
-				sb.append("\t"+"CALL"+"\t");
-				sb.append("DIV"+"\n");
+					sb.append("\t"+"PUSH"+"\t");
+					sb.append("0,"+"\t");
+					sb.append("GR2"+"\n");	
+				}
+				else {
+					sbForProc.append("\t"+"CALL"+"\t");
+					sbForProc.append("DIV"+"\n");
 
-				sb.append("\t"+"PUSH"+"\t");
-				sb.append("0,"+"\t");
-				sb.append("GR2"+"\n");	
+					sbForProc.append("\t"+"PUSH"+"\t");
+					sbForProc.append("0,"+"\t");
+					sbForProc.append("GR2"+"\n");	
+				}
+				
 
 				nextresult=result/temp;
 			}
 
 			if (operatortype==5) {
-				sb.append("\t"+"CALL"+"\t");
-				sb.append("DIV"+"\n");
+				if(scope.equals("global")) {
+					sb.append("\t"+"CALL"+"\t");
+					sb.append("DIV"+"\n");
 
+					sb.append("\t"+"PUSH"+"\t");
+					sb.append("0,"+"\t");
+					sb.append("GR1"+"\n");	
+				}
+				else {
+					sbForProc.append("\t"+"CALL"+"\t");
+					sbForProc.append("DIV"+"\n");
 
-				sb.append("\t"+"PUSH"+"\t");
-				sb.append("0,"+"\t");
-				sb.append("GR1"+"\n");	
-
+					sbForProc.append("\t"+"PUSH"+"\t");
+					sbForProc.append("0,"+"\t");
+					sbForProc.append("GR1"+"\n");	
+				}
 				nextresult=result%temp;
 			}
 		}
@@ -1599,90 +1881,180 @@ public class Compiler {
 	}
 
 	public void selectComparisonOperator() {
-		sb.append("\t"+"POP"+"\t");
-		sb.append("GR2"+"\n");
+		if(scope.equals("global")) {
+			sb.append("\t"+"POP"+"\t");
+			sb.append("GR2"+"\n");
 
-		sb.append("\t"+"POP"+"\t");
-		sb.append("GR1"+"\n");
+			sb.append("\t"+"POP"+"\t");
+			sb.append("GR1"+"\n");
 
-		//フラグに応じてCASLのCPA→ JPL, JMI, JNZ, JZEを呼び出す
-		sb.append("\t"+"CPA"+"\t");  // 左 - 右 
+			//フラグに応じてCASLのCPA→ JPL, JMI, JNZ, JZEを呼び出す
+			sb.append("\t"+"CPA"+"\t");  // 左 - 右 
 
-		sb.append("GR1,"+"\t"); 
-		sb.append("GR2\n");
+			sb.append("GR1,"+"\t"); 
+			sb.append("GR2\n");
+		}
+		else {
+			sbForProc.append("\t"+"POP"+"\t");
+			sbForProc.append("GR2"+"\n");
+
+			sbForProc.append("\t"+"POP"+"\t");
+			sbForProc.append("GR1"+"\n");
+
+			//フラグに応じてCASLのCPA→ JPL, JMI, JNZ, JZEを呼び出す
+			sbForProc.append("\t"+"CPA"+"\t");  // 左 - 右 
+
+			sbForProc.append("GR1,"+"\t"); 
+			sbForProc.append("GR2\n");
+		}
+		
 
 		switch(comparisonOperator) {
 		// WHILEかifで変える必要あり
 
 		case 1:
-			sb.append("\t"+"JZE"+"\t");
-			sb.append("TRUE"+comparisonOperatorCounter+"\n");
+			if(scope.equals("global")) {
+				sb.append("\t"+"JZE"+"\t");
+				sb.append("TRUE"+comparisonOperatorCounter+"\n");
 
-			
-			sb.append("\t"+"JUMP"+"\t");
-			sb.append("ELSE0"+"\n");
-			
+				sb.append("\t"+"JUMP"+"\t");
+				sb.append("ELSE0"+"\n");
+			}
+			else {
+				sbForProc.append("\t"+"JZE"+"\t");
+				sbForProc.append("TRUE"+comparisonOperatorCounter+"\n");
+
+				sbForProc.append("\t"+"JUMP"+"\t");
+				sbForProc.append("ELSE0"+"\n");
+			}
 			
 			//while, ifで文言を変える必要あり
 			break;
 
 		case 2:
-			sb.append("\t"+"JNZ"+"\t");
-			sb.append("TRUE"+comparisonOperatorCounter+"\n");
+			if(scope.equals("global")) {
+				sb.append("\t"+"JNZ"+"\t");
+				sb.append("TRUE"+comparisonOperatorCounter+"\n");
 
-			sb.append("\t"+"LD"+"\t");
-			sb.append("GR1,"+"\t"+"=#0000"+"\n");
+				sb.append("\t"+"LD"+"\t");
+				sb.append("GR1,"+"\t"+"=#0000"+"\n");
 
-			sb.append("\t"+"JUMP"+"\t");
-			sb.append("BOTH"+comparisonOperatorCounter+"\n");
+				sb.append("\t"+"JUMP"+"\t");
+				sb.append("BOTH"+comparisonOperatorCounter+"\n");
+			}
+			else {
+				sbForProc.append("\t"+"JNZ"+"\t");
+				sbForProc.append("TRUE"+comparisonOperatorCounter+"\n");
+
+				sbForProc.append("\t"+"LD"+"\t");
+				sbForProc.append("GR1,"+"\t"+"=#0000"+"\n");
+
+				sbForProc.append("\t"+"JUMP"+"\t");
+				sbForProc.append("BOTH"+comparisonOperatorCounter+"\n");
+			}
+			
 			break;
 
 		case 3:
-			sb.append("\t"+"JMI"+"\t");
-			sb.append("TRUE"+comparisonOperatorCounter+"\n");
+			if(scope.equals("global")) {
+				sb.append("\t"+"JMI"+"\t");
+				sb.append("TRUE"+comparisonOperatorCounter+"\n");
 
-			sb.append("\t"+"LD"+"\t");
-			sb.append("GR1,"+"\t"+"=#0000"+"\n");
+				sb.append("\t"+"LD"+"\t");
+				sb.append("GR1,"+"\t"+"=#0000"+"\n");
 
-			sb.append("\t"+"JUMP"+"\t");
-			sb.append("BOTH"+comparisonOperatorCounter+"\n");
+				sb.append("\t"+"JUMP"+"\t");
+				sb.append("BOTH"+comparisonOperatorCounter+"\n");
+			}
+			else {
+				sbForProc.append("\t"+"JMI"+"\t");
+				sbForProc.append("TRUE"+comparisonOperatorCounter+"\n");
 
+				sbForProc.append("\t"+"LD"+"\t");
+				sbForProc.append("GR1,"+"\t"+"=#0000"+"\n");
 
+				sbForProc.append("\t"+"JUMP"+"\t");
+				sbForProc.append("BOTH"+comparisonOperatorCounter+"\n");
+			}
+			
 			break;
+			
 		case 4:
-			sb.append("\t"+"JMI"+"\t");
-			sb.append("TRUE"+comparisonOperatorCounter+"\n");
+			if(scope.equals("global")) {
+				sb.append("\t"+"JMI"+"\t");
+				sb.append("TRUE"+comparisonOperatorCounter+"\n");
 
-			sb.append("\t"+"JZE"+"\t");
-			sb.append("TRUE"+comparisonOperatorCounter+"\n");
+				sb.append("\t"+"JZE"+"\t");
+				sb.append("TRUE"+comparisonOperatorCounter+"\n");
 
-			whileLoopCounter--;
-			sb.append("\t"+"JUMP"+"\t");
-			sb.append("ENDLOOP"+whileLoopCounter+"\n");
-			whileLoopCounter++;
+				whileLoopCounter--;
+				sb.append("\t"+"JUMP"+"\t");
+				sb.append("ENDLOOP"+whileLoopCounter+"\n");
+				whileLoopCounter++;
+			}
+			
+			else {
+				sbForProc.append("\t"+"JMI"+"\t");
+				sbForProc.append("TRUE"+comparisonOperatorCounter+"\n");
 
+				sbForProc.append("\t"+"JZE"+"\t");
+				sbForProc.append("TRUE"+comparisonOperatorCounter+"\n");
+
+				whileLoopCounter--;
+				sbForProc.append("\t"+"JUMP"+"\t");
+				sbForProc.append("ENDLOOP"+whileLoopCounter+"\n");
+				whileLoopCounter++;
+			}
+			
 			break;
 
 		case 5:
-			sb.append("\t"+"JPL"+"\t");
-			sb.append("TRUE"+comparisonOperatorCounter+"\n");
+			if(scope.equals("global")) {
+				sb.append("\t"+"JPL"+"\t");
+				sb.append("TRUE"+comparisonOperatorCounter+"\n");
 
-			sb.append("\t"+"LD"+"\t");
-			sb.append("GR1,"+"\t"+"=#0000"+"\n");
+				sb.append("\t"+"LD"+"\t");
+				sb.append("GR1,"+"\t"+"=#0000"+"\n");
 
-			sb.append("\t"+"JUMP"+"\t");
-			sb.append("BOTH"+comparisonOperatorCounter+"\n");
+				sb.append("\t"+"JUMP"+"\t");
+				sb.append("BOTH"+comparisonOperatorCounter+"\n");
+			}
+			
+			else {
+				sbForProc.append("\t"+"JPL"+"\t");
+				sbForProc.append("TRUE"+comparisonOperatorCounter+"\n");
+
+				sbForProc.append("\t"+"LD"+"\t");
+				sbForProc.append("GR1,"+"\t"+"=#0000"+"\n");
+
+				sbForProc.append("\t"+"JUMP"+"\t");
+				sbForProc.append("BOTH"+comparisonOperatorCounter+"\n");
+			}
+			
 			break;
 
 		case 6:
-			sb.append("\t"+"JPL"+"\t");
-			sb.append("TRUE"+comparisonOperatorCounter+"\n");
+			if(scope.equals("global")) {
+				sb.append("\t"+"JPL"+"\t");
+				sb.append("TRUE"+comparisonOperatorCounter+"\n");
 
-			sb.append("\t"+"LD"+"\t");
-			sb.append("GR1,"+"\t"+"=#0000"+"\n");
+				sb.append("\t"+"LD"+"\t");
+				sb.append("GR1,"+"\t"+"=#0000"+"\n");
 
-			sb.append("\t"+"JUMP"+"\t");
-			sb.append("BOTH"+comparisonOperatorCounter+"\n");
+				sb.append("\t"+"JUMP"+"\t");
+				sb.append("BOTH"+comparisonOperatorCounter+"\n");	
+			}
+			else {
+				sbForProc.append("\t"+"JPL"+"\t");
+				sbForProc.append("TRUE"+comparisonOperatorCounter+"\n");
+
+				sbForProc.append("\t"+"LD"+"\t");
+				sbForProc.append("GR1,"+"\t"+"=#0000"+"\n");
+
+				sbForProc.append("\t"+"JUMP"+"\t");
+				sbForProc.append("BOTH"+comparisonOperatorCounter+"\n");	
+			}
+			
 			break;	
 		}
 

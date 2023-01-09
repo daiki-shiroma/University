@@ -38,10 +38,9 @@ public class Compiler {
 	int itruemake=-1;
 	String procname;
 
-
 	public static void main(final String[] args) {
 		// Compilerを実行してcasを生成する
-		new Compiler().run("data/ts/normal11.ts", "tmp/out.cas");
+		new Compiler().run("data/ts/normal19.ts", "tmp/out.cas");
 
 		// 上記casを，CASLアセンブラ & COMETシミュレータで実行する
 		CaslSimulator.run("tmp/out.cas", "tmp/out.ans");
@@ -215,9 +214,9 @@ public class Compiler {
 
 
 		if (procedureCheck(temp)) {
-			System.out.println(temp);
 			procflag=1;
 			procname=temp;
+			scope=procname; //delete
 		}
 
 		if(arrayCheck(temp)) {
@@ -249,8 +248,6 @@ public class Compiler {
 		}
 
 
-
-
 		if (whileFlag==1) {
 			if(scope.equals("global")) {	
 				sb.append("WTRUE"+whilecount+"\t");
@@ -260,10 +257,9 @@ public class Compiler {
 				sbForProc.append("WTRUE"+whilecount+"\t");
 				sbForProc.append("NOP"+"\n");
 			}
-			//wtruemake=whilecount;
 			whileFlag=0;
 		}
-		
+
 		if (ifFlag==1) {
 			if(scope.equals("global")) {
 				sb.append("ITRUE"+ifcount+"\t");
@@ -274,7 +270,6 @@ public class Compiler {
 				sbForProc.append("ITRUE"+ifcount+"\t");
 				sbForProc.append("NOP"+"\n");
 			}
-			//itruemake=ifcount;
 			ifFlag=0;
 		}
 
@@ -320,7 +315,7 @@ public class Compiler {
 				arrayflag=0;
 				arrayreferFlag=0;
 				if (str[1].equals("SSEMICOLON")) {
-
+					scope="global"; //delete
 					return true;
 				}
 				else str = scanner.nextLine().split("\t"); 
@@ -330,7 +325,6 @@ public class Compiler {
 		}
 
 		if (str[1].equals("SCOLON")) { 
-			//procflag=0; //maybe chnage
 			if (!temp.equals(":")) {
 				if(varDuplicationCheck(temp)) {
 					variable[index][1]=temp;
@@ -435,7 +429,6 @@ public class Compiler {
 			String substitutionType=str[1];			
 			if (str[1].equals("SBOOLEAN")|| str[1].equals("STRUE") ||str[1].equals("SFALSE")||str[1].equals("SSTRING") ) {
 
-
 				if(scope.equals("global")) {
 					if(str[1].equals("STRUE")) {
 						sb.append("\t"+"PUSH"+"\t");
@@ -456,7 +449,6 @@ public class Compiler {
 						sb.append("0, "+"\t");
 						sb.append("GR1"+"\n");
 
-
 					}
 				}
 
@@ -472,7 +464,7 @@ public class Compiler {
 					}
 
 					if(str[1].equals("SSTRING")) {
-						System.out.println(str[0]+str[3]);
+
 						sbForProc.append("\t"+"LD"+"\t");
 						sbForProc.append("GR1, "+"\t");
 						sbForProc.append("="+str[0]+"\n");
@@ -481,15 +473,13 @@ public class Compiler {
 						sbForProc.append("0, "+"\t");
 						sbForProc.append("GR1"+"\n");
 
-
 					}
 				}
 
 
 				if (!temp.equals(":=")) {
 					if(substitutionTypeCheck(temp,substitution,substitutionType)) {
-						//variable[i][5]に代入
-
+						
 					}
 					else {
 						errorType=1;
@@ -500,12 +490,11 @@ public class Compiler {
 
 				str = scanner.nextLine().split("\t");
 
-
 				if (str[1].equals("SSEMICOLON")) {
 					if(scope.equals("global")) sb.append(sbsub);
 					else {
 						sbForProc.append(sbsub);
-						System.out.println(sbForProc);
+
 					}
 
 					sbsub.setLength(0);
@@ -531,6 +520,8 @@ public class Compiler {
 					}
 
 				}
+				
+				 System.out.println(str[0]+str[3]);
 
 
 
@@ -553,11 +544,9 @@ public class Compiler {
 				sb.append("\t"+"CALL"+"\t");
 				sb.append("PROC");
 				sb.append("0\n");
-				//procCounterではなく, globalでない何個目の変数か
 
-				//sb.append(procCounter+"\n");
-				//procCounter++;
 
+				scope="global"; //delete
 				return true;
 			}
 			else errorType=1;
@@ -617,12 +606,8 @@ public class Compiler {
 
 			else if (str[1].equals("SIDENTIFIER")) {
 
-				/////
 				result=changeResult(operatortype, result);
 				variable[varStackPoint][5]=String.valueOf(result);
-
-				////
-
 
 				String temp=varTypeCheck(str[0]);
 				if (temp!=null) {
@@ -796,20 +781,14 @@ public class Compiler {
 
 			selectComparisonOperator();
 
-			
 			// フラグ初期化
 
 			this.booleanType=booleanType;
 			return true; 
 		}
 
-
-
-
 		if (str[1].equals("STRUE") || str[1].equals("SFALSE") || str[1].equals("SAND") 
 				|| str[1].equals("SOR") || str[1].equals("SNOT")) {
-
-
 
 			if(str[1].equals("STRUE")) {
 				if(scope.equals("global")) {
@@ -899,7 +878,7 @@ public class Compiler {
 					}
 					for (int i=0; variable[i][0]!=null; i++) {
 						if (procname.equals(variable[i][0])) { 
-							addrOfArgument=i+procargumentcounter; //procargumentcounter増やす必要あり
+							addrOfArgument=i+procargumentcounter; //引数に応じてprocargumentcounter増やす必要あり
 							sb.append("\t"+"LD"+"\t");
 							sb.append("GR2, "+"\t");
 							sb.append("="+addrOfArgument+"\n");
@@ -950,7 +929,6 @@ public class Compiler {
 
 				}
 
-
 				str = scanner.nextLine().split("\t");
 
 
@@ -994,7 +972,6 @@ public class Compiler {
 						}
 					}
 				}
-
 
 				if (str[1].equals("SCOLON")) { 
 					functionArgument=1;
@@ -1056,10 +1033,7 @@ public class Compiler {
 
 				}
 
-				else {
-					//sbsub.append("\t"+"POP"+"\t");  //maybe chnage
-					//sbsub.append("GR2"+"\n");
-				}
+				else {}
 
 				return true;
 			}
@@ -1141,7 +1115,7 @@ public class Compiler {
 
 	public boolean SWHILE(Scanner scanner) {
 		whileFlag=1;
-		
+
 		if(scope.equals("global")) {
 			sb.append("LOOP"+whilecount+"\t");
 			sb.append("NOP"+"\n");
@@ -1151,7 +1125,6 @@ public class Compiler {
 			sbForProc.append("NOP"+"\n");
 		}
 
-		//whileLoopCounter++;
 		if (conditionalExpression(scanner)) {
 			str = scanner.nextLine().split("\t");
 
@@ -1183,13 +1156,13 @@ public class Compiler {
 
 						if(scope.equals("global")) {
 							sb.append("\t"+"JUMP"+"\t"+"LOOP"+whilecount+"\n");
-							sb.append("ENDLOOP"+whilecount+"\t");
+							sb.append("ENDLP"+whilecount+"\t");
 							sb.append("NOP"+"\n");
 						}
 
 						else {
 							sbForProc.append("\t"+"JUMP"+"\t"+"LOOP"+whilecount+"\n");
-							sbForProc.append("ENDLOOP"+whilecount+"\t");
+							sbForProc.append("ENDLP"+whilecount+"\t");
 							sbForProc.append("NOP"+"\n");
 						}
 						break; 
@@ -1275,7 +1248,7 @@ public class Compiler {
 						sbForProc.append("NOP"+"\n");
 					}
 
-					ifcount++; //maybe delete
+					ifcount++; 
 					ifFlag=0;
 					return true; 
 				}
@@ -1364,7 +1337,18 @@ public class Compiler {
 	}
 
 	public boolean SWRITELN(Scanner scanner) {
-		
+		if (whileFlag==1) {
+			if(scope.equals("global")) {	
+				sb.append("WTRUE"+whilecount+"\t");
+				sb.append("NOP"+"\n");
+			}
+			else {
+				sbForProc.append("WTRUE"+whilecount+"\t");
+				sbForProc.append("NOP"+"\n");
+			}
+			whileFlag=0;
+		}
+
 		int block=0;
 		str = scanner.nextLine().split("\t");
 		if (str[1].equals("SLPAREN")) {
@@ -1410,8 +1394,6 @@ public class Compiler {
 							sb.append("\t"+"CALL"+"\t");
 							sb.append("WRTSTR"+"\n");
 
-							sb.append("\t"+"CALL"+"\t");
-							sb.append("WRTLN"+"\n");
 						}
 
 						else {
@@ -1442,31 +1424,25 @@ public class Compiler {
 							sbForProc.append("\t"+"CALL"+"\t");
 							sbForProc.append("WRTSTR"+"\n");
 
-							sbForProc.append("\t"+"CALL"+"\t");
-							sbForProc.append("WRTLN"+"\n");
 						}
-
 						block=1;
-
 					}
 
-					if (str[1].equals("SIDENTIFIER")) { //arrayは除くべき, 関数arrayCheck
+					else if (str[1].equals("SIDENTIFIER")) { 
 
-						if( !arrayCheck(str[0])) {
-
-							for (int i=0; variable[i][0]!=null; i++) {
-								if (scope.equals(variable[i][0])&str[0].equals(variable[i][1])) { //scopeに判定も追加すべき
-									varStackPoint=i;
-									//varStackPoint--;
-
-									break;	 
-								}
-							}
-
+						if(!arrayCheck(str[0])) {
 							if(scope.equals("global")) {
+
+								for (int i=0; variable[i][0]!=null; i++) {
+									if (scope.equals(variable[i][0])&str[0].equals(variable[i][1])) { 
+										varStackPoint=i;
+										break;	 
+									}
+								}
+
 								sb.append("\t"+"LD"+"\t");
 								sb.append("GR2,"+"\t");
-								sb.append("="+varStackPoint+"\n"); //0とは限らない, arrayの場合は変わる
+								sb.append("="+varStackPoint+"\n"); 
 
 								sb.append("\t"+"LD"+"\t");
 								sb.append("GR1,"+"\t");
@@ -1483,9 +1459,22 @@ public class Compiler {
 							}
 
 							else {
+
+								for (int i=0; variable[i][0]!=null; i++) {
+									if (scope.equals(variable[i][0])&str[0].equals(variable[i][1])) { 
+										varStackPoint=i;
+										break;	 
+									}
+
+									else if (!scope.equals("global") & variable[i][0].equals("global")&str[0].equals(variable[i][1]) && variableSameName(str[0])==1) { 
+										varStackPoint=i;
+										break;	 
+									}
+								}
+
 								sbForProc.append("\t"+"LD"+"\t");
 								sbForProc.append("GR2,"+"\t");
-								sbForProc.append("="+varStackPoint+"\n"); //0とは限らない, arrayの場合は変わる
+								sbForProc.append("="+varStackPoint+"\n"); 
 
 								sbForProc.append("\t"+"LD"+"\t");
 								sbForProc.append("GR1,"+"\t");
@@ -1501,8 +1490,9 @@ public class Compiler {
 
 							}
 
-
 							String temp=varTypeCheck(str[0]);
+
+							if(temp==null) temp=variable[varStackPoint][2];
 
 							if(temp!=null) {
 								if(temp.equals("integer")) {
@@ -1514,7 +1504,6 @@ public class Compiler {
 										sbForProc.append("\t"+"CALL"+"\t");
 										sbForProc.append("WRTINT"+"\n");
 									}
-
 								}
 
 								else if (temp.equals("char")) {
@@ -1526,40 +1515,30 @@ public class Compiler {
 										sbForProc.append("\t"+"CALL"+"\t");
 										sbForProc.append("WRTCH"+"\n");
 									}
-
 								}
 								else {}		
 							}
-
-							if(scope.equals("global")) {
-								sb.append("\t"+"CALL"+"\t");
-								sb.append("WRTLN"+"\n");
-							}
-							else {
-								sbForProc.append("\t"+"CALL"+"\t");
-								sbForProc.append("WRTLN"+"\n");
-							}
-
-
 							block=1;
 						}
 
 						else {	
 							arrayreferFlag=1;
 							for (int i=0; variable[i][0]!=null; i++) {
-								if (scope.equals(variable[i][0])&str[0].equals(variable[i][1])) { //scopeに判定も追加すべき
+								if (scope.equals(variable[i][0])&str[0].equals(variable[i][1])) { 
 									varStackPoint=i;
 									varStackPoint--;
 									break;	 
 								}
-							}
-						}
 
+								else if (!scope.equals("global") & variable[i][0].equals("global")&str[0].equals(variable[i][1])) { 
+									varStackPoint=i;
+									varStackPoint--;  
+									break;	 
+								}
+							}		
+						}
 					}
 
-
-
-					//::::
 					str = scanner.nextLine().split("\t");
 
 					if (str[1].equals("SLPAREN") || str[1].equals("SLBRACKET") ) {
@@ -1588,15 +1567,12 @@ public class Compiler {
 								sb.append("0,"+"\t");
 								sb.append("GR1"+"\n");
 
-
 								sb.append("\t"+"POP"+"\t");
 								sb.append("GR2"+"\n");
 
 								sb.append("\t"+"CALL"+"\t");
 								sb.append("WRTINT"+"\n");
 
-								sb.append("\t"+"CALL"+"\t");
-								sb.append("WRTLN"+"\n");
 							}
 
 							else {
@@ -1609,19 +1585,15 @@ public class Compiler {
 								sbForProc.append("0,"+"\t");
 								sbForProc.append("GR1"+"\n");
 
-
 								sbForProc.append("\t"+"POP"+"\t");
 								sbForProc.append("GR2"+"\n");
 
 								sbForProc.append("\t"+"CALL"+"\t");
 								sbForProc.append("WRTINT"+"\n");
 
-								sbForProc.append("\t"+"CALL"+"\t");
-								sbForProc.append("WRTLN"+"\n");
 							}
-
 						}
-
+						block=0;
 					}
 					if (str[1].equals("SRPAREN")) {
 						if (block!=1) {
@@ -1635,15 +1607,12 @@ public class Compiler {
 								sb.append("0,"+"\t");
 								sb.append("GR1"+"\n");
 
-
 								sb.append("\t"+"POP"+"\t");
 								sb.append("GR2"+"\n");
 
 								sb.append("\t"+"CALL"+"\t");
 								sb.append("WRTINT"+"\n");
 
-								sb.append("\t"+"CALL"+"\t");
-								sb.append("WRTLN"+"\n");
 							}
 							else {
 								sbForProc.append("\t"+"LD"+"\t");
@@ -1661,10 +1630,15 @@ public class Compiler {
 								sbForProc.append("\t"+"CALL"+"\t");
 								sbForProc.append("WRTINT"+"\n");
 
-								sbForProc.append("\t"+"CALL"+"\t");
-								sbForProc.append("WRTLN"+"\n");
 							}
-
+						}
+						if(scope.equals("global")) {
+							sb.append("\t"+"CALL"+"\t");
+							sb.append("WRTLN"+"\n");
+						}
+						else {
+							sbForProc.append("\t"+"CALL"+"\t");
+							sbForProc.append("WRTLN"+"\n");
 						}
 						return true;
 					}
@@ -1748,14 +1722,12 @@ public class Compiler {
 	}
 
 	public boolean procedureCheck(String procname) {
-		//System.out.println(procname);
+
 		for (int i=0; i<100;i++) {
-			if((variable[i][0]!=null)&&((variable[i][0].equals(procname))/*||(variable[i][1].equals(varName))*/)) {
-				//System.out.println(str[0]+str[3]);
+			if((variable[i][0]!=null)&&((variable[i][0].equals(procname)))) {
 				return true;
 			}
 		}
-
 		return false; //when procedure name
 	}
 
@@ -1763,12 +1735,34 @@ public class Compiler {
 		for (int i=0; i<100;i++) {
 			if((variable[i][0]!=null)&&(variable[i][0].equals(scope))) {
 				if (variable[i][1].equals(varName)) {
-					if ((variable[i][3]!=null)&&(variable[i][3].equals("array")))
+
+					if ((variable[i][3]!=null)&&(variable[i][3].equals("array"))) {	
 						return true;
+					}		
+				}
+			}
+
+			else if ((variable[i][0]!=null)) {
+				if(!scope.equals("global") & variable[i][0].equals("global")) { //maybe delete
+					if (variable[i][1].equals(varName)) {
+						if ((variable[i][3]!=null)&&(variable[i][3].equals("array"))) {							
+							return true;
+						}		
+					}
+
 				}
 			}
 		}
 		return false;
+	}
+
+
+	int variableSameName(String varName) {
+		int count=0;
+		for (int i=0; variable[i][0]!=null; i++) {
+			if ( variable[i][1].equals(varName)) count++;
+		}
+		return count;
 	}
 
 	int changeResult (int operatortype, int result) {
@@ -1823,11 +1817,8 @@ public class Compiler {
 								sbForProc.append("\t"+"PUSH"+"\t");
 								sbForProc.append(temp+"\n");
 							}
-
 						}
-
 					}
-
 				}        	
 			}		
 		}
@@ -1838,11 +1829,11 @@ public class Compiler {
 				sb.append("\t"+"PUSH"+"\t");
 				sb.append(temp+"\n");
 			}
+			
 			else {
 				sbForProc.append("\t"+"PUSH"+"\t");
 				sbForProc.append(temp+"\n");
 			}
-
 		}
 
 
@@ -1865,7 +1856,6 @@ public class Compiler {
 				sbForProc.append("GR1"+"\n");
 			}
 
-
 			if (operatortype==1) {
 				if(scope.equals("global")) {
 					sb.append("\t"+"ADDA"+"\t");
@@ -1886,10 +1876,8 @@ public class Compiler {
 					sbForProc.append("0,"+"\t");
 					sbForProc.append("GR1"+"\n");	
 				}
-
 				nextresult=result+temp;
 			}
-
 
 			if (operatortype==2) {
 				if(scope.equals("global")) {
@@ -1954,7 +1942,6 @@ public class Compiler {
 					sbForProc.append("GR2"+"\n");	
 				}
 
-
 				nextresult=result/temp;
 			}
 
@@ -1990,7 +1977,6 @@ public class Compiler {
 			sb.append("\t"+"POP"+"\t");
 			sb.append("GR1"+"\n");
 
-			//フラグに応じてCASLのCPA→ JPL, JMI, JNZ, JZEを呼び出す
 			sb.append("\t"+"CPA"+"\t");  // 左 - 右 
 
 			sb.append("GR1,"+"\t"); 
@@ -2012,7 +1998,6 @@ public class Compiler {
 
 
 		switch(comparisonOperator) {
-		// WHILEかifで変える必要あり
 
 		case 1:
 			if(scope.equals("global")) {
@@ -2020,7 +2005,7 @@ public class Compiler {
 				if (whileFlag==1) {
 					sb.append("WTRUE"+whilecount+"\n");
 					sb.append("\t"+"JUMP"+"\t");
-					sb.append("ENDLOOP"+whilecount+"\n");
+					sb.append("ENDLP"+whilecount+"\n");
 				}
 
 				if (ifFlag==1) {
@@ -2035,7 +2020,7 @@ public class Compiler {
 				if (whileFlag==1) {
 					sbForProc.append("WTRUE"+whilecount+"\n");
 					sbForProc.append("\t"+"JUMP"+"\t");
-					sbForProc.append("ENDLOOP"+whilecount+"\n");
+					sbForProc.append("ENDLP"+whilecount+"\n");
 				}
 
 				if(ifFlag==1) {
@@ -2043,7 +2028,6 @@ public class Compiler {
 					sbForProc.append("\t"+"JUMP"+"\t");
 					sbForProc.append("ELSE"+ifcount+"\n");
 				}
-
 			}
 
 			break;
@@ -2054,7 +2038,7 @@ public class Compiler {
 				if (whileFlag==1) {
 					sb.append("WTRUE"+whilecount+"\n");
 					sb.append("\t"+"JUMP"+"\t");
-					sb.append("ENDLOOP"+whilecount+"\n");
+					sb.append("ENDLP"+whilecount+"\n");
 				}
 
 				if (ifFlag==1) {
@@ -2062,14 +2046,14 @@ public class Compiler {
 					sb.append("\t"+"JUMP"+"\t");
 					sb.append("ELSE"+ifcount+"\n");
 				}
-				
+
 			}
 			else {
 				sbForProc.append("\t"+"JNZ"+"\t");
 				if (whileFlag==1) {
 					sbForProc.append("WTRUE"+whilecount+"\n");
 					sbForProc.append("\t"+"JUMP"+"\t");
-					sbForProc.append("ENDLOOP"+whilecount+"\n");
+					sbForProc.append("ENDLP"+whilecount+"\n");
 				}
 
 				if (ifFlag==1) {
@@ -2087,7 +2071,7 @@ public class Compiler {
 				if (whileFlag==1) {
 					sb.append("WTRUE"+whilecount+"\n");
 					sb.append("\t"+"JUMP"+"\t");
-					sb.append("ENDLOOP"+whilecount+"\n");
+					sb.append("ENDLP"+whilecount+"\n");
 				}
 
 				if (ifFlag==1) {
@@ -2095,14 +2079,14 @@ public class Compiler {
 					sb.append("\t"+"JUMP"+"\t");
 					sb.append("ELSE"+ifcount+"\n");
 				}
-				
+
 			}
 			else {
 				sbForProc.append("\t"+"JMI"+"\t");
 				if (whileFlag==1) {
 					sbForProc.append("WTRUE"+whilecount+"\n");
 					sbForProc.append("\t"+"JUMP"+"\t");
-					sbForProc.append("ENDLOOP"+whilecount+"\n");
+					sbForProc.append("ENDLP"+whilecount+"\n");
 				}
 
 				if (ifFlag==1) {
@@ -2111,7 +2095,6 @@ public class Compiler {
 					sbForProc.append("ELSE"+ifcount+"\n");
 				}
 			}
-
 			break;
 
 		case 4:
@@ -2122,7 +2105,7 @@ public class Compiler {
 					sb.append("\t"+"JZE"+"\t");
 					sb.append("WTRUE"+whilecount+"\n");
 					sb.append("\t"+"JUMP"+"\t");
-					sb.append("ENDLOOP"+whilecount+"\n");
+					sb.append("ENDLP"+whilecount+"\n");
 				}
 
 				if(ifFlag==1) {
@@ -2141,9 +2124,9 @@ public class Compiler {
 					sbForProc.append("\t"+"JZE"+"\t");
 					sbForProc.append("WTRUE"+whilecount+"\n");
 					sbForProc.append("\t"+"JUMP"+"\t");
-					sbForProc.append("ENDLOOP"+whilecount+"\n");		
+					sbForProc.append("ENDLP"+whilecount+"\n");		
 				}
-				
+
 				if (ifFlag==1) {
 					sbForProc.append("ITRUE"+ifcount+"\n");
 					sbForProc.append("\t"+"JZE"+"\t");
@@ -2161,7 +2144,7 @@ public class Compiler {
 				if (whileFlag==1) {
 					sb.append("WTRUE"+whilecount+"\n");
 					sb.append("\t"+"JUMP"+"\t");
-					sb.append("ENDLOOP"+whilecount+"\n");
+					sb.append("ENDLP"+whilecount+"\n");
 				}
 
 				if(ifFlag==1) {
@@ -2176,9 +2159,9 @@ public class Compiler {
 				if (whileFlag==1) {
 					sbForProc.append("WTRUE"+whilecount+"\n");
 					sbForProc.append("\t"+"JZE"+"\t");
-					sbForProc.append("ENDLOOP"+whilecount+"\n");		
+					sbForProc.append("ENDLP"+whilecount+"\n");		
 				}
-				
+
 				if (ifFlag==1) {
 					sbForProc.append("ITRUE"+ifcount+"\n");
 					sbForProc.append("\t"+"JZE"+"\t");
@@ -2193,7 +2176,7 @@ public class Compiler {
 				if (whileFlag==1) {
 					sb.append("WTRUE"+whilecount+"\n");
 					sb.append("\t"+"JUMP"+"\t");
-					sb.append("ENDLOOP"+whilecount+"\n");
+					sb.append("ENDLP"+whilecount+"\n");
 				}
 
 				if(ifFlag==1) {
@@ -2207,9 +2190,9 @@ public class Compiler {
 				if (whileFlag==1) {
 					sbForProc.append("WTRUE"+whilecount+"\n");
 					sbForProc.append("\t"+"JZE"+"\t");
-					sbForProc.append("ENDLOOP"+whilecount+"\n");		
+					sbForProc.append("ENDLP"+whilecount+"\n");		
 				}
-				
+
 				if (ifFlag==1) {
 					sbForProc.append("ITRUE"+ifcount+"\n");
 					sbForProc.append("\t"+"JZE"+"\t");

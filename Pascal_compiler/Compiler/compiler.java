@@ -550,6 +550,8 @@ public class Compiler {
 		int minusFlag = 0;
 
 		while (scanner.hasNextLine()) {
+			
+			System.out.println(str[0]+"  "+str[3]+"cal");
 
 			if (str[1].equals("SLPAREN") || (str[1].equals("SLBRACKET"))) {
 				// minusFlag=2;
@@ -557,6 +559,11 @@ public class Compiler {
 					flag = 1;
 					if (Brackets(scanner)) {
 						str = scanner.nextLine().split("\t");
+						
+						//System.out.println(str[0]+"  "+str[3]);
+						
+						result = changeResult(operatortype, result, minusFlag); //maybe delete
+						
 
 					} else
 						return false;
@@ -574,11 +581,9 @@ public class Compiler {
 					return true;
 			}
 			
-			System.out.println(str[0]+" "+str[3]);
-			System.out.println("minusFlag:"+minusFlag);
 
 			if (str[1].equals("SCONSTANT")) {
-			
+				
 				result = changeResult(operatortype, result, minusFlag);
 				variable[varStackPoint][5] = String.valueOf(result);
 
@@ -589,9 +594,9 @@ public class Compiler {
 				}
 
 				str = scanner.nextLine().split("\t");
+				
 				minusFlag = 2;
 				if (str[1].equals("SSEMICOLON") || (str[1].equals("SRPAREN")) || (str[1].equals("SRBRACKET"))) {
-					if (str[1].equals("SSEMICOLON"))
 						return true;
 				}
 			}
@@ -621,7 +626,6 @@ public class Compiler {
 				str = scanner.nextLine().split("\t");
 
 				if (str[1].equals("SSEMICOLON") || (str[1].equals("SRPAREN")) || (str[1].equals("SRBRACKET"))) {
-					if(str[1].equals("SRPAREN")) selectComparisonOperator();
 					return true;
 				}
 			}
@@ -748,7 +752,6 @@ public class Compiler {
 		}
 
 		if (str[1].equals("STHEN") || str[1].equals("SDO")) {
-			selectComparisonOperator();
 			this.booleanType = booleanType;
 			return true;
 		}
@@ -792,9 +795,9 @@ public class Compiler {
 			SLbracketflag = 1; // [
 
 		str = scanner.nextLine().split("\t");
-
+		
 		while (true) {
-
+			System.out.println(str[0]+"  "+str[3]+"bra");
 			if (str[1].equals("SLPAREN") || (str[1].equals("SLBRACKET"))) {// SLBRACKET=[
 				something = 1;
 				if (Brackets(scanner))
@@ -812,8 +815,9 @@ public class Compiler {
 				}
 				something = 1;
 				temp = str[0];
-				if (procflag == 1) {
 
+				
+				if (procflag == 1) {
 					int addrOfArgument = 0;
 					if (str[1].equals("SCONSTANT")) {
 						sb.append("\t" + "PUSH" + "\t");
@@ -959,13 +963,16 @@ public class Compiler {
 
 			if (str[1].equals("SPLUS") || str[1].equals("SMINUS") || str[1].equals("SSTAR") || str[1].equals("SDIVD")) {
 				something = 1;
+				
 				if (calculation(scanner)) {
+					
 					if (str[1].equals("SSEMICOLON")) {
-						str = scanner.nextLine().split("\t");
+						//str = scanner.nextLine().split("\t"); 
 					} 
 				} else
 					break;
 			}
+			
 
 			if (str[1].equals("SNOT"))
 				return true;
@@ -973,8 +980,10 @@ public class Compiler {
 			if (something == 0)
 				break;
 
-			if (str[1].equals("STHEN") || str[1].equals("SDO"))
+			if (str[1].equals("STHEN") || str[1].equals("SDO")) {
 				return true;
+			}
+			
 
 			if (str[1].equals("SSEMICOLON")) {
 				procflag = 0;
@@ -1017,7 +1026,8 @@ public class Compiler {
 	public boolean conditionalExpression(Scanner scanner) {
 		int brflag = 0;
 		int loopcount = 0;
-
+		
+		
 		while (true) {
 			str = scanner.nextLine().split("\t");
 
@@ -1032,13 +1042,13 @@ public class Compiler {
 
 			if (!calculation(scanner))
 				break;
-
+			
+			System.out.println("comparisonOperator "+comparisonOperator);
+			
 			if (str[1].equals("SEQUAL") || str[1].equals("SNOTEQUAL") || str[1].equals("SLESS")
 					|| str[1].equals("SLESSEQUAL") || str[1].equals("SGREATEQUAL") || str[1].equals("SGREAT")) {
 
 				str = scanner.nextLine().split("\t");
-				
-				System.out.println(str[0]+" "+str[3]);
 
 				if (str[1].equals("SDO") || str[1].equals("STHEN"))
 					break;
@@ -1053,6 +1063,9 @@ public class Compiler {
 
 				if (!calculation(scanner))
 					break;
+				
+				System.out.println("comparisonOperator "+comparisonOperator);
+				
 				loopcount++;
 			}
 
@@ -1073,6 +1086,10 @@ public class Compiler {
 				loopcount++;
 
 			if ((brflag == 0) && (str[1].equals("SDO") || str[1].equals("STHEN"))) {
+				System.out.println(str[0]+" "+str[3]+"condi");
+				System.out.println("comparisonOperator "+comparisonOperator);
+				selectComparisonOperator();
+				
 				if (loopcount == 0 && brflag == 0) {
 					if (booleanType == 1) {
 						booleanType = 0;
@@ -1162,7 +1179,7 @@ public class Compiler {
 	public boolean SIF(Scanner scanner) {
 		ifFlag = 1;
 		if (conditionalExpression(scanner)) {
-
+		
 			str = scanner.nextLine().split("\t");
 
 			if (str[1].equals("SBEGIN")) {
@@ -1747,8 +1764,6 @@ public class Compiler {
 			
 			if (minusFlag == 1) {
 				if (scope.equals("global")) {
-					System.out.println(str[0]+" "+str[3]);
-					System.out.println("changeResult"+"minusFlag:"+minusFlag);
 					
 					sb.append("\t" + "PUSH" + "\t");
 					sb.append("0" + "\n");
@@ -1809,7 +1824,7 @@ public class Compiler {
 			}
 		}
 
-		else {
+		else  if (str[1].equals("SCONSTANT")){
 			if (minusFlag == 1) {
 				if (scope.equals("global")) {
 					sb.append("\t" + "PUSH" + "\t");
@@ -1955,7 +1970,6 @@ public class Compiler {
 				nextresult = result % temp;
 			}
 		}
-
 		return nextresult;
 	}
 

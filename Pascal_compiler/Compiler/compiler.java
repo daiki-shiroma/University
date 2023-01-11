@@ -39,11 +39,12 @@ public class Compiler {
 	int argmentflag=0;
 	int procintro=0;
 	int procToBracket=0;
+	int mltiArgument=0;
 	String procname;
 
 	public static void main(final String[] args) {
 		// Compilerを実行してcasを生成する
-		new Compiler().run("data/ts/normal18.ts", "tmp/out.cas");
+		new Compiler().run("data/ts/normal10.ts", "tmp/out.cas");
 
 		// 上記casを，CASLアセンブラ & COMETシミュレータで実行する
 		CaslSimulator.run("tmp/out.cas", "tmp/out.ans");
@@ -196,9 +197,7 @@ public class Compiler {
 	}
 
 	public boolean SVAR(Scanner scanner) {
-
 		str = scanner.nextLine().split("\t");
-
 		if (str[1].equals("SIDENTIFIER")) {
 			if (SIDENTIFIER(scanner, scope))
 				return true;
@@ -319,7 +318,6 @@ public class Compiler {
 				return false;
 			else {
 				procToBracket=0;
-				//System.out.println(str[0]+"  "+str[3]);
 				arrayflag = 0;
 				arrayreferFlag = 0;
 				sassignForPop = 0;
@@ -339,7 +337,7 @@ public class Compiler {
 							}
 							
 						}
-						//else procintro=0;	
+						
 					}
 					procflag=0;
 					argmentflag=0;
@@ -458,6 +456,7 @@ public class Compiler {
 				return false;
 			}
 			str = scanner.nextLine().split("\t");
+			
 
 			String substitution = str[0];
 			String substitutionType = str[1];
@@ -542,7 +541,7 @@ public class Compiler {
 					}
 				}
 
-				if (calculation(scanner, 0)) {
+				if (calculation(scanner)) {
 					
 					if (scope.equals("global"))
 						sb.append(sbsub);
@@ -573,7 +572,7 @@ public class Compiler {
 		return false;
 	}
 
-	public boolean calculation(Scanner scanner, int argmentflag) {
+	public boolean calculation(Scanner scanner) {
 
 		int flag = 0;
 		int integerType = 0;
@@ -584,15 +583,12 @@ public class Compiler {
 		int minusFlag = 0;
 
 		while (scanner.hasNextLine()) {
-			
-		
 		
 			if (str[1].equals("SLPAREN") || (str[1].equals("SLBRACKET"))) {
 			
 				while (true) {
 					flag = 1;	
 					if (minusFlag == 1) {
-						
 						if (scope.equals("global")) {
 							sb.append("\t" + "PUSH" + "\t");
 							sb.append("0; cal before bra" + "\n");
@@ -604,14 +600,9 @@ public class Compiler {
 					}
 					minusFlag = 2;
 					
-					if (Brackets(scanner)) {
-						
-						changeResult(operatortype, minusFlag, 0); 
-						
-						
-						str = scanner.nextLine().split("\t");
-					
-					
+					if (Brackets(scanner)) {				
+						changeResult(operatortype, minusFlag); 
+						str = scanner.nextLine().split("\t");		
 					} else
 						return false;
 
@@ -624,15 +615,12 @@ public class Compiler {
 
 			if ((flag == 1)
 					&& (str[1].equals("SSEMICOLON") || (str[1].equals("SRPAREN")) || (str[1].equals("SRBRACKET")))) {
-			
 					return true;
 			}
 			
 
 			if (str[1].equals("SCONSTANT")) {
-				
-				changeResult(operatortype, minusFlag, argmentflag);
-
+				changeResult(operatortype, minusFlag);
 				integerType = 1;
 				if ((integerType + charType + stringType + booleanType) > 1) {
 					errorType = 1;
@@ -648,8 +636,9 @@ public class Compiler {
 			}
 
 			else if (str[1].equals("SIDENTIFIER")) {
-			
-				changeResult(operatortype,minusFlag , argmentflag);
+				System.out.println(str[0]+" "+str[3]);
+				
+				changeResult(operatortype,minusFlag);
 	
 				String temp = varTypeCheck(str[0]);
 				if (temp != null) {
@@ -836,8 +825,10 @@ public class Compiler {
 		int something = 0;
 		int SLbracketflag = 0;
 		int multiArgument=0;
+		int firstArgument=0;
 		String initArgment="";
 		String temp;
+		
 		if (str[1].equals("SLBRACKET"))
 			SLbracketflag = 1; // [
 
@@ -866,10 +857,8 @@ public class Compiler {
 				initArgment=str[0];
 
 				if (procflag == 1 && procintro==0) {
-					
 					 addrOfArgument = 0;
 					if (str[1].equals("SCONSTANT")) {
-						//initArgment=str[0];
 						if (scope.equals("global")) {
 							sb.append("\t" + "PUSH" + "\t");
 							sb.append(Integer.parseInt(str[0]) + "\n");
@@ -884,10 +873,9 @@ public class Compiler {
 
 					if (str[1].equals("SIDENTIFIER")) {
 					
-					
 						for (int i = 0; variable[i][0] != null; i++) {
 							if (scope.equals(variable[i][0]) & str[0].equals(variable[i][1])) {
-								System.out.println(str[0]+" "+str[3]);
+								
 								if (scope.equals("global")) {
 									sbsub.append("\t" + "LD" + "\t");
 									sbsub.append("GR2,\t" + "=" + i + ";LD2\n");
@@ -902,6 +890,21 @@ public class Compiler {
 									sbsub.append("GR1\n");
 									break; //maybe change
 								}
+								else {
+									sbForProc.append("\t" + "LD" + "\t");
+									sbForProc.append("GR2,\t" + "=" + i + ";LD2\n");
+
+									sbForProc.append("\t" + "LD" + "\t");
+									sbForProc.append("GR1," + "\t");
+									sbForProc.append("VAR,\t");
+									sbForProc.append("GR2\n");
+
+									sbForProc.append("\t" + "PUSH" + "\t");
+									sbForProc.append("0,\t");
+									sbForProc.append("GR1\n");
+									break; //maybe change
+						
+								}
 								
 							}
 						}
@@ -910,10 +913,10 @@ public class Compiler {
 					for (int i = 0; variable[i][0] != null; i++) {
 						if (procname.equals(variable[i][0])) {
 							addrOfArgument = i; 
-							if (procToBracket==1) {
-								System.out.println(str[0]+str[3]);
+							firstArgument  = i;
+							/*if (procToBracket==1) {
 								changeArgument(); 
-							}
+							}*/
 							break;
 						}
 					}
@@ -949,10 +952,9 @@ public class Compiler {
 				}
 				
 				else {	
-					
-					changeResult(0,0, 0);
-					
+					changeResult(0,0);
 				}
+				
 				
 				str = scanner.nextLine().split("\t"); //do not delete!!
 			
@@ -966,8 +968,7 @@ public class Compiler {
 						if (flag == 0) {
 							if (str[1].equals("SCOMMA")) {
 								addrOfArgument++;
-								//changeArgument();
-								 
+								
 								if(procintro==1) {
 									if (!temp.equals(",")) { //care
 										variable[index][0] = scope; 
@@ -992,13 +993,16 @@ public class Compiler {
 								}
 							}
 							
-								if (!calculation(scanner, argmentflag )) {
+								if (!calculation(scanner)) {
 									if (str[1].equals("SCOLON") || str[1].equals("SCOMMA")) {
 									} else
 										break;
 								} else
 									str = scanner.nextLine().split("\t");
-						    changeArgument();
+                                
+								
+							//if (procToBracket==1)   changeArgument();
+								
 							flag = 0;
 							temp = str[0];
 						}
@@ -1006,13 +1010,10 @@ public class Compiler {
 							break;
 
 						if (flag == 0 && (str[1].equals("SRPAREN") || str[1].equals("SRBRACKET"))) {
-							//argmentflag=0; //delete
 							break;
 						}
 						
-
 						if (flag == 0 && str[1].equals("SSEMICOLON")) {
-							//argmentflag=0; //delete
 							break;
 						}
 					}
@@ -1050,9 +1051,7 @@ public class Compiler {
 								System.out.print(variable[i][4]);
 								System.out.println(variable[i][5]);
 							}
-							
-							
-							
+									
 						}
 						
 						if (functionArgument == 0)
@@ -1069,7 +1068,7 @@ public class Compiler {
 			if (str[1].equals("SPLUS") || str[1].equals("SMINUS") || str[1].equals("SSTAR") || str[1].equals("SDIVD")) {
 				something = 1;
 				
-				if (calculation(scanner, 0)) {
+				if (calculation(scanner)) {
 					
 					if (str[1].equals("SSEMICOLON")) {
 						//str = scanner.nextLine().split("\t"); 
@@ -1091,6 +1090,13 @@ public class Compiler {
 			
 
 			if (str[1].equals("SSEMICOLON")) {
+				if (procToBracket==1) {
+					System.out.println(str[0]+"       "+str[3]);
+					while(addrOfArgument>=firstArgument) {
+						changeArgument();
+						addrOfArgument--;
+					}
+				}
 				procflag = 0;
 				return true;
 			}
@@ -1099,6 +1105,14 @@ public class Compiler {
 				return true;
 
 			if (str[1].equals("SRPAREN") || str[1].equals("SRBRACKET")) {
+				if (procToBracket==1) {
+					System.out.println(str[0]+"       "+str[3]);
+					while(addrOfArgument>=firstArgument) {
+						changeArgument();
+						addrOfArgument--;
+					}
+				}
+				
 				procflag = 0;
 				
 				if (arrayreferFlag == 1) {
@@ -1146,7 +1160,7 @@ public class Compiler {
 				str = scanner.nextLine().split("\t");
 			}
 
-			if (!calculation(scanner, 0))
+			if (!calculation(scanner))
 				break;
 			
 	
@@ -1166,11 +1180,11 @@ public class Compiler {
 				if (str[1].equals("SNOT")) {
 					str = scanner.nextLine().split("\t");
 				}
+				
+				//System.out.println(str[0]+ "  "+str[3]);
 
-				if (!calculation(scanner, 0))
+				if (!calculation(scanner))
 					break;
-				
-				
 				
 				loopcount++;
 			}
@@ -1861,100 +1875,13 @@ public class Compiler {
 		return count;
 	}
 
-	void changeResult(int operatortype,int minusFlag, int argmentflag) {
+	void changeResult(int operatortype,int minusFlag) {
 	
 		int temp = 0;
-		
-		if (argmentflag==1) {/*
-			
-			if (str[1].equals("SCONSTANT")) {
-				//scopeで分ける
-				if (scope.equals("global")) {
-					sb.append("\t" + "PUSH" + "\t");
-					sb.append(Integer.parseInt(str[0]) + "\n");
-				}
-				else {
-					sbForProc.append("\t" + "PUSH" + "\t");
-					sbForProc.append(Integer.parseInt(str[0]) + "\n");
-				}
-				
-			}
-
-			if (str[1].equals("SIDENTIFIER")) {
-				for (int i = 0; variable[i][0] != null; i++) {
-					if (scope.equals(variable[i][0]) & str[0].equals(variable[i][1])) {
-						System.out.println(str[0]+"  "+str[3]);
-						if (scope.equals("global")) {
-							sbsub.append("\t" + "LD" + "\t");
-							sbsub.append("GR2,\t" + "=" + i + ";;;;;;;;;;\n");
-
-							sbsub.append("\t" + "LD" + "\t");
-							sbsub.append("GR1," + "\t");
-							sbsub.append("VAR,\t");
-							sbsub.append("GR2\n");
-
-							sbsub.append("\t" + "PUSH" + "\t");
-							sbsub.append("0,\t");
-							sbsub.append("GR1\n");
-						}
-						
-						else {
-							sbForProc.append("\t" + "LD" + "\t");
-							sbForProc.append("GR2,\t" + "=" + i + ";;;;;;;;;;\n");
-
-							sbForProc.append("\t" + "LD" + "\t");
-							sbForProc.append("GR1," + "\t");
-							sbForProc.append("VAR,\t");
-							sbForProc.append("GR2\n");
-
-							sbForProc.append("\t" + "PUSH" + "\t");
-							sbForProc.append("0,\t");
-							sbForProc.append("GR1\n");
-						}
-						
-						break; 
-					}
-				}
-			}
-				
-			if (scope.equals("global")) {
-				sb.append("\t" + "LD" + "\t");
-				sb.append("GR2, " + "\t");
-				sb.append("=" + addrOfArgument + "\n");
-
-				sb.append("\t" + "POP" + "\t");
-				sb.append("GR1" + "\n");
-
-				sb.append("\t" + "ST" + "\t");
-				sb.append("GR1, " + "\t");
-				sb.append("VAR, " + "\t");
-				sb.append("GR2" + "\n");
-			}
-			
-			else {
-				sbForProc.append("\t" + "LD" + "\t");
-				sbForProc.append("GR2, " + "\t");
-				sbForProc.append("=" + addrOfArgument + "\n");
-
-				sbForProc.append("\t" + "POP" + "\t");
-				sbForProc.append("GR1" + "\n");
-
-				sbForProc.append("\t" + "ST" + "\t");
-				sbForProc.append("GR1, " + "\t");
-				sbForProc.append("VAR, " + "\t");
-				sbForProc.append("GR2" + "\n");
-			}
-					
-			
-			return;
-	
-		*/}
-
-	
-	
 		if (str[1].equals("SIDENTIFIER")) {
-			if (minusFlag == 1) {
 			
+			
+			if (minusFlag == 1) {
 				if (scope.equals("global")) {
 					sb.append("\t" + "PUSH" + "\t");
 					sb.append("0;changeResult" + "\n");
@@ -1963,10 +1890,9 @@ public class Compiler {
 					sbForProc.append("0" + "\n");
 				}
 			}
-
+			
 			for (int i = 0; variable[i][0] != null; i++) {
 				if (scope.equals(variable[i][0]) & str[0].equals(variable[i][1])) {
-
 					if (sassignFlag == 1) {
 						if (scope.equals("global")) {
 							sb.append("\t" + "LD" + "\t");
@@ -2011,8 +1937,112 @@ public class Compiler {
 							}
 						}
 					}
+					break;
+				}
+
+				else if (!scope.equals("global") & variable[i][0].equals("global")
+						& str[0].equals(variable[i][1]) && variableSameName(str[0]) == 1) {
+					if (sassignFlag == 1) {
+						if (scope.equals("global")) {
+							sb.append("\t" + "LD" + "\t");
+							sb.append("GR2," + "\t");
+							sb.append("=" + i + "\n");
+
+							sb.append("\t" + "LD" + "\t");
+							sb.append("GR1," + "\t");
+							sb.append("VAR," + "\t");
+							sb.append("GR2\n");
+
+							sb.append("\t" + "PUSH" + "\t");
+							sb.append("0," + "\t");
+							sb.append("GR1" + "\n");
+						}
+
+						else {
+							sbForProc.append("\t" + "LD" + "\t");
+							sbForProc.append("GR2," + "\t");
+							sbForProc.append("=" + i + "\n");
+
+							sbForProc.append("\t" + "LD" + "\t");
+							sbForProc.append("GR1," + "\t");
+							sbForProc.append("VAR," + "\t");
+							sbForProc.append("GR2\n");
+
+							sbForProc.append("\t" + "PUSH" + "\t");
+							sbForProc.append("0," + "\t");
+							sbForProc.append("GR1" + "\n");
+						}
+					}
+
+					else {
+						if (variable[i][5] != null) {
+							temp = Integer.parseInt(variable[i][5]);
+							if (scope.equals("global")) {
+								sb.append("\t" + "PUSH" + "\t");
+								sb.append(temp + "\n");
+							} else {
+								sbForProc.append("\t" + "PUSH" + "\t");
+								sbForProc.append(temp + "\n");
+							}
+						}
+					}
+					break;
 				}
 			}
+
+			/*for (int i = 0; variable[i][0] != null; i++) {
+				if (scope.equals(variable[i][0]) & str[0].equals(variable[i][1])) {
+					System.out.println(str[0]+" "+str[3]);
+					//NNがscope外を参照している
+					if (sassignFlag == 1) {
+						if (scope.equals("global")) {
+							sb.append("\t" + "LD" + "\t");
+							sb.append("GR2," + "\t");
+							sb.append("=" + i + "\n");
+
+							sb.append("\t" + "LD" + "\t");
+							sb.append("GR1," + "\t");
+							sb.append("VAR," + "\t");
+							sb.append("GR2\n");
+
+							sb.append("\t" + "PUSH" + "\t");
+							sb.append("0," + "\t");
+							sb.append("GR1" + "\n");
+						}
+
+						else {
+							sbForProc.append("\t" + "LD" + "\t");
+							sbForProc.append("GR2," + "\t");
+							sbForProc.append("=" + i + "\n");
+
+							sbForProc.append("\t" + "LD" + "\t");
+							sbForProc.append("GR1," + "\t");
+							sbForProc.append("VAR," + "\t");
+							sbForProc.append("GR2\n");
+
+							sbForProc.append("\t" + "PUSH" + "\t");
+							sbForProc.append("0," + "\t");
+							sbForProc.append("GR1" + "\n");
+						}
+					}
+
+					else {
+						if (variable[i][5] != null) {
+							temp = Integer.parseInt(variable[i][5]);
+							if (scope.equals("global")) {
+								sb.append("\t" + "PUSH" + "\t");
+								sb.append(temp + "\n");
+							} else {
+								sbForProc.append("\t" + "PUSH" + "\t");
+								sbForProc.append(temp + "\n");
+							}
+						}
+					}
+					
+					
+					
+				}
+			}*/
 		}
 
 		else  if (str[1].equals("SCONSTANT")){

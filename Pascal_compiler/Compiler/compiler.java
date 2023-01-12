@@ -47,7 +47,7 @@ public class Compiler {
 
 	public static void main(final String[] args) {
 		// Compilerを実行してcasを生成する
-		new Compiler().run("data/ts/normal13.ts", "tmp/out.cas");
+		new Compiler().run("data/ts/normal18.ts", "tmp/out.cas");
 
 		// 上記casを，CASLアセンブラ & COMETシミュレータで実行する
 		CaslSimulator.run("tmp/out.cas", "tmp/out.ans");
@@ -653,6 +653,7 @@ public class Compiler {
 			}
 
 			else if (str[1].equals("SIDENTIFIER")) {
+			System.out.println(str[0]+str[3]+"aaa");
 			
 				changeResult(operatortype,minusFlag);
 	
@@ -838,7 +839,6 @@ public class Compiler {
 	}
 
 	public boolean Brackets(Scanner scanner) {
-		int wok=0;
 		int functionArgument = 0;
 		int flag = 0;
 		int something = 0;
@@ -2019,8 +2019,9 @@ public class Compiler {
 			for (int i = 0; variable[i][0] != null; i++) {
 				if (scope.equals(variable[i][0]) & str[0].equals(variable[i][1])) {
 					if (sassignFlag == 1 || procflag==1 || conditionalFlag==1) {
-					
+						
 						if  (!arrayCheck(str[0])) {
+							
 							if (scope.equals("global")) {
 								sb.append("\t" + "LD" + "\t");
 								sb.append("GR2," + "\t");
@@ -2172,7 +2173,7 @@ public class Compiler {
 
 				else if (!scope.equals("global") & variable[i][0].equals("global")
 						& str[0].equals(variable[i][1]) && variableSameName(str[0]) == 1) {
-					if (sassignFlag == 1) {
+					if (sassignFlag == 1 || procflag==1 || conditionalFlag==1) {
 						if (scope.equals("global")) {
 							sb.append("\t" + "LD" + "\t");
 							sb.append("GR2," + "\t");

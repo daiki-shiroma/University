@@ -11,19 +11,20 @@ import enshud.casl.CaslSimulator;
 
 public class Compiler {
 	String[] str = {};
-	String[][] variable = new String[100][6]; // scope name type array arrayindex value
+	String[][] variable = new String[1000][6]; // scope name type array arrayindex value
 	String scope = "global";
+	String procname;
+	String eachprocess = "";
+	StringBuilder sb = new StringBuilder();
+	StringBuilder sbsub = new StringBuilder();
+	StringBuilder sbForProc = new StringBuilder();
+	StringBuilder subRoutineBuff = new StringBuilder();
 	int index = 0;
 	int indexTemp = 0;
 	int errorType = 0;
 	int booleanType = 0;
 	int arrayreferFlag = 0;
 	int arrayreferFlagRight=0;
-	String eachprocess = "";
-	StringBuilder sb = new StringBuilder();
-	StringBuilder sbsub = new StringBuilder();
-	StringBuilder sbForProc = new StringBuilder();
-	StringBuilder subRoutineBuff = new StringBuilder();
 	int subRoutineBuffCount = 0;
 	int varStackPoint = 0;
 	int whilecount = -1;
@@ -44,11 +45,11 @@ public class Compiler {
 	int varFlag=0;
 	int minusFlag = 0;
 	int bracketTocalculate=0;
-	String procname;
+	
 
 	public static void main(final String[] args) {
 		// Compilerを実行してcasを生成する
-		new Compiler().run("data/ts/normal15.ts", "tmp/out.cas");
+		new Compiler().run("data/ts/normal14.ts", "tmp/out.cas");
 
 		// 上記casを，CASLアセンブラ & COMETシミュレータで実行する
 		CaslSimulator.run("tmp/out.cas", "tmp/out.ans");
@@ -234,7 +235,6 @@ public class Compiler {
 
 		for (int i = 0; variable[i][0] != null; i++) {
 			if (scope.equals(variable[i][0]) & str[0].equals(variable[i][1])) {
-
 				if (arrayflag != 1) {
 					if (varFlag==0) {
 						sbsub.append("\t" + "LD" + "\t");
@@ -327,7 +327,6 @@ public class Compiler {
 				arrayreferFlag = 0;
 				sassignForPop = 0;
 				if (str[1].equals("SSEMICOLON")) {
-
 					if (argmentflag==1){
 						if (procintro==0) {
 							if (scope.equals("global")) {
@@ -586,8 +585,6 @@ public class Compiler {
 					flag = 1;	
 
 					if (Brackets(scanner)) {	
-						System.out.println(str[0]+"  "+str[3]);
-
 						str = scanner.nextLine().split("\t");		
 						System.out.println(str[0]+"  "+str[3]);
 						System.out.println("operatortype  "+operatortype);
@@ -620,7 +617,7 @@ public class Compiler {
 			if ((flag == 1)
 					&& (str[1].equals("SSEMICOLON") || (str[1].equals("SRPAREN")) || (str[1].equals("SRBRACKET")))) {
 
-				if (str[1].equals("SSEMICOLON")){
+				if (str[1].equals("SSEMICOLON") || (str[1].equals("SRPAREN"))){
 					if (formerOperatortype==0) changeResult(operatortype, minusFlag); 
 					else changeResult(formerOperatortype, minusFlag); 
 					arrayreferFlagRight=0;
@@ -634,14 +631,10 @@ public class Compiler {
 
 				if (operatortype==0) changeResult(operatortype, minusFlag); 
 
-				else if (operatortype==formerOperatortype & operatortype > 0) {
-					changeResult(0, minusFlag); 
-				}
-
-				else if (operatortype>=3) {
-					changeResult(operatortype, minusFlag); 
-				}
-
+				else if (operatortype==formerOperatortype & operatortype > 0) changeResult(0, minusFlag); 
+					
+				else if (operatortype>=3) changeResult(operatortype, minusFlag); 
+					
 				integerType = 1;
 				if ((integerType + charType + stringType + booleanType) > 1) {
 					errorType = 1;
@@ -696,17 +689,13 @@ public class Compiler {
 				}
 
 				if (arrayreferFlagRight==0) {
-					if (operatortype==0) 
-						changeResult(operatortype, minusFlag); 
-
-					else if (operatortype==formerOperatortype & operatortype > 0) 
-						changeResult(0, minusFlag); 
-						
-					else if (operatortype==3 || operatortype== 4) 
-						changeResult(operatortype, minusFlag); 
+					if (operatortype==0) changeResult(operatortype, minusFlag); 
+					
+					else if (operatortype==formerOperatortype & operatortype > 0) 	changeResult(0, minusFlag); 
+					
+					else if (operatortype==3 || operatortype== 4) changeResult(operatortype, minusFlag); 
 				}
-				else 
-					arrayreferFlagRightNotOperate=1;
+				else arrayreferFlagRightNotOperate=1;
 				
 				String temp = varTypeCheck(str[0]);
 				if (temp != null) {
@@ -1085,7 +1074,6 @@ public class Compiler {
 					if (procflag == 1 && procintro==0) argmentflag=1; 
 
 					while (true) {
-
 						if (flag == 0) {
 							if (str[1].equals("SCOMMA")) {
 								addrOfArgument++;
@@ -1995,11 +1983,10 @@ public class Compiler {
 	}
 
 	public boolean varDuplicationCheck(String varName) {
-		for (int i = 0; i < 100; i++) {
-			if ((variable[i][0] != null) && (variable[i][0].equals(scope))) {
-				if (variable[i][1].equals(varName)) {
+		for (int i = 0; variable[i][0] != null; i++) {
+			if (variable[i][0].equals(scope)){
+				if (variable[i][1].equals(varName)) 
 					return false;
-				}
 			}
 		}
 		return true;
@@ -2007,12 +1994,12 @@ public class Compiler {
 
 	public boolean substitutionTypeCheck(String varName, String substitution, String substitutionType) {
 		String varType = null;
-		for (int i = 0; i < 100; i++) {
-			if ((variable[i][0] != null) && (variable[i][0].equals(scope))) {
+		for (int i = 0; variable[i][0] != null; i++) {
+			if (variable[i][0].equals(scope)) {
 				if (variable[i][1].equals(varName)) {
 					if (str[1].equals("SIDENTIFIER")) {
-						for (int j = 0; j < 100; j++) {
-							if ((variable[j][0] != null) && (variable[j][0].equals(scope))) {
+						for (int j = 0; variable[j][0] != null; j++) {
+							if (variable[j][0].equals(scope)) {
 								if (variable[j][1].equals(substitution)) {
 									varType = variable[j][2];
 									break;
@@ -2042,12 +2029,11 @@ public class Compiler {
 	}
 
 	public boolean checkSCONSTANT(String varName) {
-		for (int i = 0; i < 100; i++) {
-			if ((variable[i][0] != null) && (variable[i][0].equals(scope))) {
+		for (int i = 0; variable[i][0] != null; i++) {
+			if ((variable[i][0].equals(scope))) {
 				if (variable[i][1].equals(varName)) {
-					if (variable[i][2].equals("integer")) {
+					if (variable[i][2].equals("integer")) 
 						return true;
-					}
 				}
 			}
 		}
@@ -2055,8 +2041,8 @@ public class Compiler {
 	}
 
 	public String varTypeCheck(String varName) {
-		for (int i = 0; i < 100; i++) {
-			if ((variable[i][0] != null) && (variable[i][0].equals(scope))) {
+		for (int i = 0; variable[i][0] != null; i++) {
+			if ((variable[i][0].equals(scope))) {
 				if (variable[i][1].equals(varName)) {
 					return variable[i][2];
 				}
@@ -2066,10 +2052,9 @@ public class Compiler {
 	}
 
 	public boolean procedureCheck(String procname) {
-		for (int i = 0; i < 100; i++) {
-			if ((variable[i][0] != null) && ((variable[i][0].equals(procname)))) {
+		for (int i = 0; variable[i][0] != null; i++) {
+			if ((variable[i][0].equals(procname))) 
 				return true;
-			}
 		}
 		return false;
 	}
@@ -2077,30 +2062,27 @@ public class Compiler {
 	public int whichProcedureCall(String procname) {
 		int count=-1;
 		String formerScope="global";
-		for (int i = 0; i < 100; i++) {
-			if ((variable[i][0] != null)) {
+		for (int i = 0; variable[i][0] != null; i++) {
 				if (formerScope.equals(variable[i][0])) {}
 				else count++;
 				
 				if (variable[i][0].equals(procname)) break;
-					
 				formerScope=variable[i][0];
-			}
 		}
 		return count;
 	}
 
 
 	public boolean arrayCheck(String varName) {
-		for (int i = 0; i < 100; i++) {
-			if ((variable[i][0] != null) && (variable[i][0].equals(scope))) {
+		for (int i = 0; variable[i][0] != null; i++) {
+			if ((variable[i][0].equals(scope))) {
 				if (variable[i][1].equals(varName)) {
 					if ((variable[i][3] != null) && (variable[i][3].equals("array"))) 
 						return true;
 				}
 			}
 
-			else if ((variable[i][0] != null)) {
+			else {
 				if (!scope.equals("global") & variable[i][0].equals("global")) { 
 					if (variable[i][1].equals(varName)) {
 						if ((variable[i][3] != null) && (variable[i][3].equals("array"))) 

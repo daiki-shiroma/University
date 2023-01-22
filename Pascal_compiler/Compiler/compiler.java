@@ -6,7 +6,8 @@ import java.util.Scanner;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.PrintWriter;
-
+import java.util.ArrayList;
+import java.util.List;
 import enshud.casl.CaslSimulator;
 
 public class Compiler {
@@ -47,10 +48,15 @@ public class Compiler {
 	int minusFlag = 0;
 	int bracketTocalculate=0;
 	int bracketcouter=0;
+	int comparisonOperatorFlag=0;	
+	int andCounter=0;	
+	int specialCoditonalFlag=0;	
+	List<String> Operatorlist = new ArrayList<String>();
+
 
 	public static void main(final String[] args) {
 		// Compilerを実行してcasを生成する
-		new Compiler().run("data/ts/normal14.ts", "tmp/out.cas");
+		new Compiler().run("data/ts/normal12.ts", "tmp/out.cas");
 
 		// 上記casを，CASLアセンブラ & COMETシミュレータで実行する
 		CaslSimulator.run("tmp/out.cas", "tmp/out.ans");
@@ -237,17 +243,31 @@ public class Compiler {
 			if (scope.equals(variable[i][0]) & str[0].equals(variable[i][1])) {
 				if (arrayflag != 1) {
 					if (varFlag==0) {
-						sbsub.append("\t" + "LD" + "\t");
-						sbsub.append("GR2," + "\t");
-						sbsub.append("=" + i + ";LD1\n");
+						if(comparisonOperatorFlag==1){	
+						sb.append("\t" + "LD" + "\t");	
+						sb.append("GR2," + "\t");	
+						sb.append("=" + i + "\n");	
+						sb.append("\t" + "LD" + "\t");	
+						sb.append("GR1," + "\t");	
+						sb.append("VAR," + "\t");	
+						sb.append("GR2" + "\n");	
+						sb.append("\t" + "PUSH");	
+						sb.append("\t" + "0," + "\t");	
+						sb.append("GR1" + "\n");	
+						}	
+						else {
+							sbsub.append("\t" + "LD" + "\t");
+							sbsub.append("GR2," + "\t");
+							sbsub.append("=" + i + ";LD1\n");
 
-						sbsub.append("\t" + "POP" + "\t");
-						sbsub.append("GR1" + "\n");
+							sbsub.append("\t" + "POP" + "\t");
+							sbsub.append("GR1" + "\n");
 
-						sbsub.append("\t" + "ST" + "\t");
-						sbsub.append("GR1," + "\t");
-						sbsub.append("VAR," + "\t");
-						sbsub.append("GR2" + "\n");
+							sbsub.append("\t" + "ST" + "\t");
+							sbsub.append("GR1," + "\t");
+							sbsub.append("VAR," + "\t");
+							sbsub.append("GR2" + "\n");
+						}
 					}
 				} else {
 					//varStackPoint = i;
@@ -262,17 +282,31 @@ public class Compiler {
 
 				if (arrayflag != 1) {
 					if (varFlag==0) {
-						sbsub.append("\t" + "LD" + "\t");
-						sbsub.append("GR2," + "\t");
-						sbsub.append("=" + i + ";LD111\n");
+						if(comparisonOperatorFlag==1){	
+						sb.append("\t" + "LD" + "\t");	
+						sb.append("GR2," + "\t");	
+						sb.append("=" + i + "\n");	
+						sb.append("\t" + "LD" + "\t");	
+						sb.append("GR1," + "\t");	
+						sb.append("VAR," + "\t");	
+						sb.append("GR2" + "\n");	
+						sb.append("\t" + "PUSH" + "\t");	
+						sb.append("0," + "\t");	
+						sb.append("GR1" + "\n");	
+						}	
+						else {
+							sbsub.append("\t" + "LD" + "\t");
+							sbsub.append("GR2," + "\t");
+							sbsub.append("=" + i + ";LD111\n");
 
-						sbsub.append("\t" + "POP" + "\t");
-						sbsub.append("GR1" + "\n");
+							sbsub.append("\t" + "POP" + "\t");
+							sbsub.append("GR1" + "\n");
 
-						sbsub.append("\t" + "ST" + "\t");
-						sbsub.append("GR1," + "\t");
-						sbsub.append("VAR," + "\t");
-						sbsub.append("GR2" + "\n");
+							sbsub.append("\t" + "ST" + "\t");
+							sbsub.append("GR1," + "\t");
+							sbsub.append("VAR," + "\t");
+							sbsub.append("GR2" + "\n");
+						}
 					}
 				} else {
 					if (i>0) i--;
@@ -536,13 +570,15 @@ public class Compiler {
 				}
 
 				if (calculation(scanner)) {
-
-					if (scope.equals("global"))
-						sb.append(sbsub);
-					else
-						sbForProc.append(sbsub);
-					sbsub.setLength(0);
-					sassignFlag=0;
+					if (comparisonOperator>0) comparisonOperatorFlag=1;
+					if (comparisonOperatorFlag==0) {
+						if (scope.equals("global"))
+							sb.append(sbsub);
+						else
+							sbForProc.append(sbsub);
+						sbsub.setLength(0);
+						sassignFlag=0;
+					}
 					return true;
 				}
 			}
@@ -556,7 +592,19 @@ public class Compiler {
 				sb.append(whichProcedureCall(procname)+"\n");
 				scope = "global"; 
 				return true;
-			} else errorType = 1;
+			}
+			else if (comparisonOperatorFlag==1) {	
+				selectComparisonOperator();	
+				if (scope.equals("global"))	
+					sb.append(sbsub);	
+				else	
+					sbForProc.append(sbsub);	
+				sbsub.setLength(0);	
+				sassignFlag=0;	
+				comparisonOperatorFlag=0;	
+				return true;	
+			}
+			else errorType = 1;
 		}
 		return false;
 	}
@@ -575,12 +623,12 @@ public class Compiler {
 		int finishbracket=0;
 		int arrayreferFlagRightNotOperate=0;
 		int arrayreferFlagRightNotOperateFlag=0;
-        int arrayreferFlagRightFlag=0;
+		int arrayreferFlagRightFlag=0;
 		while (scanner.hasNextLine()) {
 			arrayreferFlagRightNotOperateFlag=0;
 
 			if (str[1].equals("SLPAREN") || (str[1].equals("SLBRACKET"))) {
-
+				if (conditionalFlag==1)Operatorlist.add(str[0].toUpperCase());
 				while (true) {
 					flag = 1;	
 
@@ -588,9 +636,9 @@ public class Compiler {
 						if((str[1].equals("SRBRACKET")))	{
 							arrayreferFlagRight=0;
 						}
-					
+
 						str = scanner.nextLine().split("\t");		
-				
+
 						if(arrayreferFlagRightNotOperate==1 && count>1 ) {
 							arrayreferFlagRightNotOperateFlag=1;
 							if (operatortype>=3) {
@@ -606,8 +654,10 @@ public class Compiler {
 						return false;
 
 					minusFlag = 2;
-					if (str[1].equals("SLPAREN") || (str[1].equals("SLBRACKET")))
+					if (str[1].equals("SLPAREN") || (str[1].equals("SLBRACKET"))) {
+						if (conditionalFlag==1)Operatorlist.add(str[0].toUpperCase());
 						continue;
+					}
 					else
 						break;
 				}
@@ -622,7 +672,7 @@ public class Compiler {
 					arrayreferFlagRight=0;
 				}
 				if (str[1].equals("SRBRACKET")) 	arrayreferFlagRight=0;
-				
+
 				return true;
 			}
 
@@ -631,9 +681,9 @@ public class Compiler {
 				if (operatortype==0) changeResult(operatortype, minusFlag); 
 
 				else if (operatortype==formerOperatortype & operatortype > 0) changeResult(0, minusFlag); 
-					
+
 				else if (operatortype>=3) changeResult(operatortype, minusFlag); 
-					
+
 				integerType = 1;
 				if ((integerType + charType + stringType + booleanType) > 1) {
 					errorType = 1;
@@ -644,16 +694,17 @@ public class Compiler {
 
 				minusFlag = 2;
 				if (str[1].equals("SSEMICOLON") || (str[1].equals("SRPAREN")) || (str[1].equals("SRBRACKET"))) {
+
 					if (formerOperatortype==0) changeResult(operatortype, minusFlag); 
 					else changeResult(formerOperatortype, minusFlag); 
-					
+
 					minusFlag=0;
 					return true;
 				}
 			}
 
 			else if (str[1].equals("SIDENTIFIER")) {
-				
+
 				if (sassignFlag==1 || conditionalFlag==1) {
 					if (arrayCheck(str[0]) && arrayreferFlagRight==0) {
 						if (minusFlag == 1) {
@@ -684,15 +735,15 @@ public class Compiler {
 				}
 
 				if (arrayreferFlagRight==0) {
-					
+
 					if (operatortype==0) changeResult(operatortype, minusFlag); 
-					
+
 					else if (operatortype==formerOperatortype & operatortype > 0) 	changeResult(0, minusFlag); 
-					
+
 					else if (operatortype==3 || operatortype== 4) changeResult(operatortype, minusFlag); 
 				}
 				else arrayreferFlagRightNotOperate=1;
-				
+
 				String temp = varTypeCheck(str[0]);
 				if (temp != null) {
 					if (temp.equals("integer"))
@@ -713,6 +764,21 @@ public class Compiler {
 				str = scanner.nextLine().split("\t");
 
 				if (str[1].equals("SSEMICOLON") || (str[1].equals("SRPAREN")) || (str[1].equals("SRBRACKET"))) {
+					if (conditionalFlag==1) {	
+						if (Operatorlist.size()>0) {	
+							specialCoditonalFlag=1;	
+							selectLogicalOperator(Operatorlist.get(Operatorlist.size()-1),-1);	
+							if (Operatorlist.size()>0)Operatorlist.remove(Operatorlist.size()-1);	
+							if (Operatorlist.size()>0)Operatorlist.remove(Operatorlist.size()-1);	
+							if (Operatorlist.size()>0) {	
+								if (Operatorlist.get(Operatorlist.size()-1).equals("NOT")) {	
+									notOperator(-1);	
+									if (Operatorlist.size()>0)Operatorlist.remove(Operatorlist.size()-1);	
+								}	
+							}	
+						}	
+					}	
+
 					if (formerOperatortype==0) changeResult(operatortype, minusFlag); 
 					else changeResult(formerOperatortype, minusFlag); 
 					minusFlag=0;
@@ -721,6 +787,7 @@ public class Compiler {
 			}
 
 			else if (str[1].equals("SSTRING")) {
+				if (conditionalFlag==1) changeResult(0, minusFlag);
 				stringType = 1;
 				if ((integerType + charType + stringType + booleanType) > 1) {
 					errorType = 1;
@@ -729,6 +796,37 @@ public class Compiler {
 				minusFlag = 2;
 				str = scanner.nextLine().split("\t");
 				if (str[1].equals("SSEMICOLON") || (str[1].equals("SRPAREN")) || (str[1].equals("SRBRACKET"))) {
+					if (conditionalFlag==1) {	
+						System.out.println(str[0]+str[3]+" 833");	
+						System.out.println(Operatorlist);	
+						System.out.println(comparisonOperator);	
+						//	
+						if (Operatorlist.size()>0) {	
+							specialCoditonalFlag=1;	
+							System.out.println(Operatorlist.get(Operatorlist.size()-1));	
+							selectLogicalOperator(Operatorlist.get(Operatorlist.size()-1),-1);	
+							if (Operatorlist.size()>0)Operatorlist.remove(Operatorlist.size()-1);	
+							if (Operatorlist.size()>0) {	
+								if (Operatorlist.get(Operatorlist.size()-1).equals("NOT")) {	
+									comparisonOperatorFlag=1;	
+									selectComparisonOperator();	
+									comparisonOperatorFlag=0;	
+									notOperator(-1);	
+								}	
+								if (Operatorlist.size()>0)Operatorlist.remove(Operatorlist.size()-1);	
+							}	
+							System.out.println(str[0]+str[3]);	
+							System.out.println(Operatorlist);	
+							if (Operatorlist.size()>0) {	
+								if (Operatorlist.get(Operatorlist.size()-1).equals("NOT")) {	
+									notOperator(-1);	
+									if (Operatorlist.size()>0)Operatorlist.remove(Operatorlist.size()-1);	
+									System.out.println(Operatorlist);	
+								}	
+							}	
+						}	
+					}	
+
 					minusFlag=0;
 					return true;
 				}
@@ -763,10 +861,10 @@ public class Compiler {
 
 				if (str[1].equals("SMINUS")) {
 					if (minusFlag == 0) minusFlag = 1;
-					
+
 					operatortype = 2;
 					if (formerOperatortype>0 && arrayreferFlagRightNotOperateFlag==0) changeResult(formerOperatortype,minusFlag); 
-					
+
 					formerOperatortype=operatortype;
 				}
 
@@ -806,7 +904,7 @@ public class Compiler {
 					if (str[1].equals("SSEMICOLON")) {
 						sbsub.append("\t" + "POP" + "\t");
 						sbsub.append("GR1" + ";835\n");
-						
+
 						sbsub.append("\t" + "ST" + "\t");
 						sbsub.append("GR1," + "\t");
 						sbsub.append("VAR," + "\t");
@@ -893,6 +991,9 @@ public class Compiler {
 		if (str[1].equals("STRUE") || str[1].equals("SFALSE") || str[1].equals("SAND") || str[1].equals("SOR")
 				|| str[1].equals("SNOT")) {
 
+			if (conditionalFlag==1 &(str[1].equals("SAND") || str[1].equals("SOR")	
+					|| str[1].equals("SNOT")))Operatorlist.add(str[0].toUpperCase());
+
 			if (str[1].equals("STRUE")) {
 				if (scope.equals("global")) {
 					sb.append("\t" + "PUSH" + "\t");
@@ -927,16 +1028,16 @@ public class Compiler {
 		int firstArgument=0;
 		String initArgment="";
 		String temp;
-		
+
 		if (str[1].equals("SLBRACKET"))
 			SLbracketflag = 1; // [
 
 		str = scanner.nextLine().split("\t");
 		while (true) {
-			
+
 			if (str[1].equals("SLPAREN") || (str[1].equals("SLBRACKET"))) {// SLBRACKET=[
 				something = 1;
-				
+
 				if (str[1].equals("SLBRACKET")) {
 					bracketcouter++;
 				}
@@ -947,7 +1048,7 @@ public class Compiler {
 
 			if (str[1].equals("SIDENTIFIER") || str[1].equals("SCONSTANT")) {
 				minusFlag=2;
-			
+
 				if ((SLbracketflag == 1) && (str[1].equals("SIDENTIFIER")) && (!checkSCONSTANT(str[0]))) {
 					errorType = 1;
 					break;
@@ -970,7 +1071,7 @@ public class Compiler {
 					}
 
 					if (str[1].equals("SIDENTIFIER")) {
-						
+
 						if (!arrayCheck(str[0])) {
 							for (int i = 0; variable[i][0] != null; i++) {
 								if (scope.equals(variable[i][0]) & str[0].equals(variable[i][1])) {
@@ -1018,7 +1119,7 @@ public class Compiler {
 				}
 
 				else if (arrayreferFlag == 1) {
-					
+
 					if (str[1].equals("SCONSTANT")) {
 						if(sassignFlag==1||(sassignFlag==0)& (conditionalFlag==1) ) {
 							sb.append("\t" + "PUSH" + "\t");
@@ -1031,7 +1132,7 @@ public class Compiler {
 					}
 
 					if (str[1].equals("SIDENTIFIER")) {
-						
+
 						if (!arrayCheck(str[0])) {
 							for (int i = 0; variable[i][0] != null; i++) {
 								if (scope.equals(variable[i][0]) & str[0].equals(variable[i][1])) {
@@ -1042,7 +1143,7 @@ public class Compiler {
 										sb.append("GR1," + "\t");
 										sb.append("VAR,\t");
 										sb.append("GR2\n");
-										
+
 										sb.append("\t" + "PUSH" + "\t");
 										sb.append("0,\t");
 										sb.append("GR1\n");
@@ -1082,9 +1183,9 @@ public class Compiler {
 
 				else 
 					changeResult(0,0);
-				
+
 				str = scanner.nextLine().split("\t"); 
-		
+
 				if (str[1].equals("SCOMMA")) {
 					multiArgument=1;
 					functionArgument = 1;
@@ -1133,7 +1234,7 @@ public class Compiler {
 
 						if (flag == 0 && (str[1].equals("SRPAREN") || str[1].equals("SRBRACKET"))) 
 							break;
-						
+
 						if (flag == 0 && str[1].equals("SSEMICOLON")) 
 							break;
 					}
@@ -1147,7 +1248,7 @@ public class Compiler {
 						temp = str[0];
 
 						if (multiArgument==0) index++;
-							
+
 						if (procintro==1) {
 							for (int i = indexTemp; i < index; i++) {
 								if (multiArgument==0) {
@@ -1164,7 +1265,7 @@ public class Compiler {
 
 						if (functionArgument == 0)
 							scope = "global";
-						
+
 						indexTemp = index;
 						str = scanner.nextLine().split("\t");
 					} else
@@ -1175,7 +1276,7 @@ public class Compiler {
 			if (str[1].equals("SPLUS") || str[1].equals("SMINUS") || str[1].equals("SSTAR") || str[1].equals("SDIVD")) {
 				something = 1;
 				bracketTocalculate=1;
-				
+
 				if (calculation(scanner)) {
 					bracketTocalculate=0;
 					if (str[1].equals("SSEMICOLON")) {} 
@@ -1183,16 +1284,19 @@ public class Compiler {
 					break;
 			}
 
-			if (str[1].equals("SNOT"))
+			if (str[1].equals("SNOT")) {
+				if (conditionalFlag==1)Operatorlist.add(str[0].toUpperCase());
 				return true;
+			}
+
 
 			if (something == 0) {
 				break;
 			}
-				
+
 			if (str[1].equals("STHEN") || str[1].equals("SDO")) 
 				return true;
-			
+
 			if (str[1].equals("SSEMICOLON")) {
 				if (procToBracket==1) {
 					while(addrOfArgument>=firstArgument) {
@@ -1204,8 +1308,11 @@ public class Compiler {
 				return true;
 			}
 
-			if (str[1].equals("STRUE") || str[1].equals("SFALSE") || str[1].equals("SAND") || str[1].equals("SOR"))
+			if (str[1].equals("STRUE") || str[1].equals("SFALSE") || str[1].equals("SAND") || str[1].equals("SOR")) {
+				if (conditionalFlag==1 &(str[1].equals("SAND") || str[1].equals("SOR")))Operatorlist.add(str[0].toUpperCase());	
 				return true;
+			}
+
 
 			if (str[1].equals("SRPAREN") || str[1].equals("SRBRACKET")) {
 				if (procToBracket==1) {
@@ -1218,20 +1325,20 @@ public class Compiler {
 
 				if (sassignFlag==0) {
 					if (arrayreferFlag == 1 &  str[1].equals("SRBRACKET")) {
-						
+
 						if (conditionalFlag==1) {
 							sb.append("\t" + "POP" + "\t");
 							sb.append("GR2" + "\n");
-							
+
 							sb.append("\t" + "ADDA" + "\t");
 							sb.append("GR2," + "\t");
 							sb.append("=" + arrayPointer(0,"pop") + "\n");
-							
+
 							sb.append("\t" + "LD" + "\t");
 							sb.append("GR1," + "\t");
 							sb.append("VAR," + "\t");
 							sb.append("GR2" + "\n");
-							
+
 							sb.append("\t" + "PUSH" + "\t");
 							sb.append("0," + "\t");
 							sb.append("GR1" + "\n");
@@ -1243,13 +1350,13 @@ public class Compiler {
 							sbsub.append("\t" + "ADDA" + "\t");
 							sbsub.append("GR2," + "\t");
 							sbsub.append("=" + arrayPointer(0,"pop") + "\n");
-							
+
 							System.out.println(str[0]+"   "+str[3]);
 							System.out.println("sassignForPop   "+sassignForPop);
 							System.out.println("bracketcouter   "+bracketcouter);
 
 							if (sassignForPop == 1 && bracketcouter<=1) {
-								
+
 								sbsub.append("\t" + "POP" + "\t");
 								sbsub.append("GR1" + ";1289\n");
 
@@ -1258,7 +1365,7 @@ public class Compiler {
 								sbsub.append("VAR," + "\t");
 								sbsub.append("GR2" + "\n");
 							}
-							
+
 							else if (bracketcouter>1){
 								sbsub.append("\t" + "LD" + "\t");
 								sbsub.append("GR1," + "\t");
@@ -1281,7 +1388,7 @@ public class Compiler {
 							sb.append("GR2," + "\t");
 							//sb.append("=" + varStackPoint + "\n");
 							sb.append("=" + arrayPointer(0,"pop") + "\n");
-							
+
 
 							sb.append("\t" + "LD" + "\t");
 							sb.append("GR1," + "\t");
@@ -1380,6 +1487,25 @@ public class Compiler {
 			if (str[1].equals("SEQUAL") || str[1].equals("SNOTEQUAL") || str[1].equals("SLESS")
 					|| str[1].equals("SLESSEQUAL") || str[1].equals("SGREATEQUAL") || str[1].equals("SGREAT")) {
 
+				if (str[1].equals("SEQUAL")) {	
+					comparisonOperator = 1;	
+				}	
+				if (str[1].equals("SNOTEQUAL")) {	
+					comparisonOperator = 2;	
+				}	
+				if (str[1].equals("SLESS")) {	
+					comparisonOperator = 3;	
+				}	
+				if (str[1].equals("SLESSEQUAL")) {	
+					comparisonOperator = 4;	
+				}	
+				if (str[1].equals("SGREATEQUAL")) {	
+					comparisonOperator = 5;	
+				}	
+				if (str[1].equals("SGREAT")) {	
+					comparisonOperator = 6;	
+				}
+
 				if (arrayreferFlagRight == 1 ) {
 					if (scope.equals("global")) {
 						sb.append("\t" + "POP" + "\t");
@@ -1420,24 +1546,30 @@ public class Compiler {
 				arrayreferFlagRight=0;
 				return true;
 			}
-			
+
 		}
 		return false;
 	}
 
-	public boolean conditionalExpression(Scanner scanner) {
+	public boolean conditionalExpression(Scanner scanner,int count) {
 		int brflag = 0;
 		int loopcount = 0;
 		conditionalFlag=1;
+		notflag = 0;	
+		int formercomparisonOperator=0;	
+		String logicalOperator=null;	
+		Operatorlist = new ArrayList<String>();
 
 		while (true) {
 			str = scanner.nextLine().split("\t");
 
 			if (str[1].equals("SLPAREN") || str[1].equals("SLBRACKET")) {
+				if (conditionalFlag==1)Operatorlist.add(str[0].toUpperCase());
 				str = scanner.nextLine().split("\t");
 				brflag++;
 			}
 			if (str[1].equals("SNOT")) {
+				if (conditionalFlag==1)Operatorlist.add(str[0].toUpperCase());
 				notflag = 1;
 				str = scanner.nextLine().split("\t");
 			}
@@ -1447,6 +1579,7 @@ public class Compiler {
 
 			if (str[1].equals("SEQUAL") || str[1].equals("SNOTEQUAL") || str[1].equals("SLESS")
 					|| str[1].equals("SLESSEQUAL") || str[1].equals("SGREATEQUAL") || str[1].equals("SGREAT")) {
+				if (formercomparisonOperator==0)formercomparisonOperator=comparisonOperator;
 
 				str = scanner.nextLine().split("\t");
 
@@ -1455,38 +1588,89 @@ public class Compiler {
 
 				if (str[1].equals("SLPAREN") || str[1].equals("SLBRACKET")) 
 					str = scanner.nextLine().split("\t");
-				
+
 				if (str[1].equals("SNOT")) 
 					str = scanner.nextLine().split("\t");
-				
+
 				if (!calculation(scanner))
 					break;
 				loopcount++;
 			}
 
-			else if (str[1].equals("STRUE") || str[1].equals("SFALSE")) 
-				str = scanner.nextLine().split("\t");
-			
+			//else if (str[1].equals("STRUE") || str[1].equals("SFALSE")) 
+			//	str = scanner.nextLine().split("\t");
+
 			if (str[1].equals("STRUE") || str[1].equals("SFALSE"))
 				str = scanner.nextLine().split("\t");
 
 			if (brflag > 0 && (str[1].equals("SRPAREN"))) {
+				//specialCoditonalFlag=1;
 				str = scanner.nextLine().split("\t");
+				if (Operatorlist.size()>0) {
+					System.out.println(Operatorlist.get(Operatorlist.size()-1));
+					selectLogicalOperator(Operatorlist.get(Operatorlist.size()-1),-1);
+					if (Operatorlist.size()>0)Operatorlist.remove(Operatorlist.size()-1);
+					if (Operatorlist.size()>0)Operatorlist.remove(Operatorlist.size()-1);
+					System.out.println(str[0]+str[3]);	
+					System.out.println(Operatorlist);
+					if (Operatorlist.size()>0) {
+						if (Operatorlist.get(Operatorlist.size()-1).equals("NOT")) {
+							notOperator(-1);
+							if (Operatorlist.size()>0)Operatorlist.remove(Operatorlist.size()-1);	
+							System.out.println(Operatorlist);
+						}
+					}
+				}
 				brflag--;
 				loopcount++;
 			}
 
-			if (str[1].equals("SAND") || str[1].equals("SOR"))
+			if (str[1].equals("SAND") || str[1].equals("SOR")) {
+				logicalOperator= str[0].toUpperCase();	
+				comparisonOperatorFlag=1;
 				loopcount++;
+			}
+
 
 			if ((brflag == 0) && (str[1].equals("SDO") || str[1].equals("STHEN"))) {
+				System.out.println(str[0]+str[3]);	
+				System.out.println(Operatorlist);	
+				System.out.println(str[0]+" "+str[3]);	
+				System.out.println("comparisonOperatorFlag "+comparisonOperatorFlag);	
+				System.out.println("comparisonOperator "+comparisonOperator);	
+				comparisonOperatorFlag=0; ///???	
+				if (specialCoditonalFlag==1) {	
+					if (comparisonOperator!=0)selectComparisonOperator();	
+					else conditionalFinish(count);	
+					specialCoditonalFlag=0;	
+				}	
+				else {	
+					if (logicalOperator!=null) {	
+						comparisonOperatorFlag=1;	
+						selectComparisonOperator();	
+						comparisonOperatorFlag=0;	
+						selectLogicalOperator(logicalOperator,count);	
+					}	
+					else if(formercomparisonOperator!=comparisonOperator){	
+						comparisonOperatorFlag=1;
 
-				selectComparisonOperator();
+
+						selectComparisonOperator();
+
+						comparisonOperatorFlag=0;	
+						comparisonOperator=formercomparisonOperator;	
+						selectComparisonOperator();	
+					}	
+					//change	
+					else selectComparisonOperator();	
+				}	
+				//change
 
 				if (loopcount == 0 && brflag == 0) {
 					if (booleanType == 1) {
 						booleanType = 0;
 						conditionalFlag=0;
+						comparisonOperatorFlag=0;
 						return true;
 					} else {
 						errorType = 1;
@@ -1518,7 +1702,7 @@ public class Compiler {
 			sbForProc.append("NOP" + "\n");
 		}
 
-		if (conditionalExpression(scanner)) {
+		if (conditionalExpression(scanner,whilecount)) {
 			str = scanner.nextLine().split("\t");
 
 			if (str[1].equals("SBEGIN")) {
@@ -1538,7 +1722,7 @@ public class Compiler {
 
 					if ((str[1].equals("SWHILE")) || (str[1].equals("SIF")) || (str[1].equals("SWRITELN"))) {} 
 					else  str = scanner.nextLine().split("\t");
-						
+
 					if (str[1].equals("SWHILE")) {
 						if (!SWHILE(scanner))
 							return false;
@@ -1592,7 +1776,7 @@ public class Compiler {
 		int itrueif=ifcount;
 		int elseif=ifcount;
 		int endif=ifcount;
-		if (conditionalExpression(scanner)) {
+		if (conditionalExpression(scanner,ifcount)) {
 			str = scanner.nextLine().split("\t");
 
 			if (str[1].equals("SBEGIN")) {
@@ -1832,7 +2016,6 @@ public class Compiler {
 
 								sb.append("\t" + "LD" + "\t");
 								sb.append("GR2," + "\t");
-								//sb.append("=" + varStackPoint + ";LD6\n");
 								tempPoint=arrayPointer(0, "pop");
 								sb.append("=" + tempPoint + ";LD6\n");
 
@@ -2122,11 +2305,11 @@ public class Compiler {
 		int count=-1;
 		String formerScope="global";
 		for (int i = 0; variable[i][0] != null; i++) {
-				if (formerScope.equals(variable[i][0])) {}
-				else count++;
-				
-				if (variable[i][0].equals(procname)) break;
-				formerScope=variable[i][0];
+			if (formerScope.equals(variable[i][0])) {}
+			else count++;
+
+			if (variable[i][0].equals(procname)) break;
+			formerScope=variable[i][0];
 		}
 		return count;
 	}
@@ -2158,7 +2341,7 @@ public class Compiler {
 		for (int i = 0; variable[i][0] != null; i++) {
 			if (variable[i][1].equals(varName)) 
 				count++;
-			
+
 			if (variable[i][3]!=null) {
 				if (count > 1 & variable[i][3].equals("array")) {
 					count--;
@@ -2174,7 +2357,7 @@ public class Compiler {
 		if (str[1].equals("SIDENTIFIER")) {
 
 			if (minusFlag == 1) {
-				
+
 				if (scope.equals("global")) {
 					if (sassignFlag == 1 || procflag==1 || conditionalFlag==1) {
 						sb.append("\t" + "PUSH" + "\t");
@@ -2357,6 +2540,11 @@ public class Compiler {
 					sbsub.append(temp + "\n");
 				}
 			}
+		}
+
+		else if (str[1].equals("SSTRING")) {	
+			sb.append("\t" + "LD" + "\t"+"GR1," + "\t"+"="+str[0] + "\n");	
+			sb.append("\t" + "PUSH" + "\t"+"0," + "\t"+"GR1" + "\n");
 		}
 
 		if (operatortype == 0) {}
@@ -2670,17 +2858,20 @@ public class Compiler {
 		case 2:
 			if (scope.equals("global")) {
 				sb.append("\t" + "JNZ" + "\t");
-				if (whileFlag == 1) {
-					sb.append("WTRUE" + whilecount + "\n");
-					sb.append("\t" + "JUMP" + "\t");
-					sb.append("ENDLP" + whilecount + "\n");
+				if (comparisonOperatorFlag!=1) {
+					if (whileFlag == 1) {
+						sb.append("WTRUE" + whilecount + "\n");
+						sb.append("\t" + "JUMP" + "\t");
+						sb.append("ENDLP" + whilecount + "\n");
+					}
+
+					if (ifFlag == 1) {
+						sb.append("ITRUE" + ifcount + "\n");
+						sb.append("\t" + "JUMP" + "\t");
+						sb.append("ELSE" + ifcount + "\n");
+					}
 				}
 
-				if (ifFlag == 1) {
-					sb.append("ITRUE" + ifcount + "\n");
-					sb.append("\t" + "JUMP" + "\t");
-					sb.append("ELSE" + ifcount + "\n");
-				}
 
 			} else {
 				sbForProc.append("\t" + "JNZ" + "\t");
@@ -2701,16 +2892,18 @@ public class Compiler {
 		case 3:
 			if (scope.equals("global")) {
 				sb.append("\t" + "JMI" + "\t");
-				if (whileFlag == 1) {
-					sb.append("WTRUE" + whilecount + "\n");
-					sb.append("\t" + "JUMP" + "\t");
-					sb.append("ENDLP" + whilecount + "\n");
-				}
+				if (comparisonOperatorFlag!=1) {
+					if (whileFlag == 1) {
+						sb.append("WTRUE" + whilecount + "\n");
+						sb.append("\t" + "JUMP" + "\t");
+						sb.append("ENDLP" + whilecount + "\n");
+					}
 
-				if (ifFlag == 1) {
-					sb.append("ITRUE" + ifcount + "\n");
-					sb.append("\t" + "JUMP" + "\t");
-					sb.append("ELSE" + ifcount + "\n");
+					if (ifFlag == 1) {
+						sb.append("ITRUE" + ifcount + "\n");
+						sb.append("\t" + "JUMP" + "\t");
+						sb.append("ELSE" + ifcount + "\n");
+					}
 				}
 
 			} else {
@@ -2838,8 +3031,89 @@ public class Compiler {
 			}
 			break;
 		}
+
+
+		if (comparisonOperatorFlag==1) {	
+			sb.append("TRUE"+andCounter + "\n");	
+			sb.append("\t" + "JUMP" + "\t"+"FALSE"+andCounter + "\n");	
+			sb.append("TRUE"+andCounter + "\t"+"LD\t" + "GR1," + "\t"+"=#0000" + "\n");	
+			sb.append("\t" + "JUMP" + "\t"+"INPUT"+andCounter + "\n");	
+			sb.append("FALSE"+andCounter + "\t"+"LD\t" + "GR1," + "\t"+"=#FFFF" + "\n");	
+			sb.append("INPUT"+andCounter + "\t"+"PUSH\t" + "0,\t" +"GR1\n");	
+			andCounter++;	
+			comparisonOperatorFlag=0;	
+		}	
+		comparisonOperator=0;
+
+
+
 		return;
 	}
+	void selectLogicalOperator(String type, int count) {
+
+		if (type.equals("AND")||type.equals("OR")) {}
+		else return;
+
+		if (scope.equals("global")) {
+			sb.append("\tPOP" + "\tGR2\n");
+			sb.append("\tPOP" + "\tGR1\n");
+			sb.append("\t" + type + "\tGR1,\t"+"GR2\n");
+			sb.append("\tPUSH" + "\t0,"+"\tGR1\n");
+			if (count>0) {
+				sb.append("\tPOP" + "\tGR1\n");
+				sb.append("\tCPA" + "\tGR1,"+"\t=#FFFF\n");
+				sb.append("\tJZE" + "\tELSE"+count+"\n");
+			}
+		}
+
+		else {
+			sbForProc.append("\tPOP" + "\tGR2\n");
+			sbForProc.append("\tPOP" + "\tGR1\n");
+			sbForProc.append("\t" + type + "\tGR1,\t"+"GR2\n");
+			sbForProc.append("\tPUSH" + "\t0,"+"\tGR1\n");
+			if (count>0) {
+				sbForProc.append("\tPOP" + "\tGR1\n");
+				sbForProc.append("\tCPA" + "\tGR1,"+"\t=#FFFF\n");
+				sbForProc.append("\tJZE" + "\tELSE"+count+"\n");
+			}
+		}
+		return;
+	}
+
+	void notOperator(int count) {
+		if (scope.equals("global")) {
+			sb.append("\tPOP" + "\tGR1" +"\n");
+			sb.append("\tXOR" + "\tGR1, "+"\t=#FFFF\n");
+			sb.append("\tPUSH" + "\t0,"+"\tGR1\n");
+
+			if (count>0) {
+				sb.append("\tPOP" + "\tGR1\n");
+				sb.append("\tCPA" + "\tGR1,"+"\t=#FFFF\n");
+				sb.append("\tJZE" + "\tELSE"+count+"\n");
+			}
+		}
+
+		else {
+			sbForProc.append("\tPOP" + "\tGR1" +"\n");
+			sbForProc.append("\tXOR" + "\tGR1, "+"\t=#FFFF\n");
+			sbForProc.append("\tPUSH" + "\t0,"+"\tGR1\n");
+
+			if (count>0) {
+				sbForProc.append("\tPOP" + "\tGR1\n");
+				sbForProc.append("\tCPA" + "\tGR1,"+"\t=#FFFF\n");
+				sbForProc.append("\tJZE" + "\tELSE"+count+"\n");
+			}
+		}
+
+		return; 
+	}
+
+	void conditionalFinish(int count) {
+		sb.append("\tPOP" + "\tGR1" +"\n");
+		sb.append("\tCPA" + "\tGR1,"+"\t=#FFFF"+"\n");
+		sb.append("\tJZE" + "\tELSE"+count+"\n");
+	}
+
 
 	void changeArgument() {
 		if (scope.equals("global")) {
@@ -2871,9 +3145,9 @@ public class Compiler {
 		}
 		return;
 	}
-	
+
 	int  arrayPointer (int arraypoint, String mode) { //push or pop
-		
+
 		int result=0;
 		if (mode.equals("push")) {
 			for (int i=0; ;i++) {
@@ -2895,7 +3169,6 @@ public class Compiler {
 						result=arraypointstack[i-1];
 						arraypointstack[i-1]=-1;
 					}
-					
 					break;
 				}
 			}

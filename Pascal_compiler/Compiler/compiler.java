@@ -244,16 +244,16 @@ public class Compiler {
 				if (arrayflag != 1) {
 					if (varFlag==0) {
 						if(comparisonOperatorFlag==1){	
-						sb.append("\t" + "LD" + "\t");	
-						sb.append("GR2," + "\t");	
-						sb.append("=" + i + "\n");	
-						sb.append("\t" + "LD" + "\t");	
-						sb.append("GR1," + "\t");	
-						sb.append("VAR," + "\t");	
-						sb.append("GR2" + "\n");	
-						sb.append("\t" + "PUSH");	
-						sb.append("\t" + "0," + "\t");	
-						sb.append("GR1" + "\n");	
+							sb.append("\t" + "LD" + "\t");	
+							sb.append("GR2," + "\t");	
+							sb.append("=" + i + "\n");	
+							sb.append("\t" + "LD" + "\t");	
+							sb.append("GR1," + "\t");	
+							sb.append("VAR," + "\t");	
+							sb.append("GR2" + "\n");	
+							sb.append("\t" + "PUSH");	
+							sb.append("\t" + "0," + "\t");	
+							sb.append("GR1" + "\n");	
 						}	
 						else {
 							sbsub.append("\t" + "LD" + "\t");
@@ -283,16 +283,16 @@ public class Compiler {
 				if (arrayflag != 1) {
 					if (varFlag==0) {
 						if(comparisonOperatorFlag==1){	
-						sb.append("\t" + "LD" + "\t");	
-						sb.append("GR2," + "\t");	
-						sb.append("=" + i + "\n");	
-						sb.append("\t" + "LD" + "\t");	
-						sb.append("GR1," + "\t");	
-						sb.append("VAR," + "\t");	
-						sb.append("GR2" + "\n");	
-						sb.append("\t" + "PUSH" + "\t");	
-						sb.append("0," + "\t");	
-						sb.append("GR1" + "\n");	
+							sb.append("\t" + "LD" + "\t");	
+							sb.append("GR2," + "\t");	
+							sb.append("=" + i + "\n");	
+							sb.append("\t" + "LD" + "\t");	
+							sb.append("GR1," + "\t");	
+							sb.append("VAR," + "\t");	
+							sb.append("GR2" + "\n");	
+							sb.append("\t" + "PUSH" + "\t");	
+							sb.append("0," + "\t");	
+							sb.append("GR1" + "\n");	
 						}	
 						else {
 							sbsub.append("\t" + "LD" + "\t");
@@ -554,14 +554,20 @@ public class Compiler {
 						sb.append(sbsub);
 					else sbForProc.append(sbsub);
 					sbsub.setLength(0);
+					sassignFlag=0;
 					return true;
 				}
 			} 
 			else {
 				if (str[1].equals("SIDENTIFIER")) {
 					String varType = varTypeCheck(temp);
+					System.out.println(str[0]+" "+str[3]);
+					System.out.println(temp);
+					System.out.println(substitution);
+					System.out.println(varType);
 					if ((varType != null) && (varType.equals("integer") || (varType.equals("char")))) {
-						if (substitutionTypeCheck(temp, substitution, varType)) {} 
+						if (temp.equals(substitution)) {}
+						else if (substitutionTypeCheck(temp, substitution, varType)) {} 
 						else {
 							errorType = 1;
 							return false;
@@ -577,8 +583,9 @@ public class Compiler {
 						else
 							sbForProc.append(sbsub);
 						sbsub.setLength(0);
-						sassignFlag=0;
+						
 					}
+					sassignFlag=0;
 					return true;
 				}
 			}
@@ -605,6 +612,7 @@ public class Compiler {
 				return true;	
 			}
 			else errorType = 1;
+			
 		}
 		return false;
 	}
@@ -619,23 +627,34 @@ public class Compiler {
 		int booleanType = 0;
 		int operatortype = 0;
 		int formerOperatortype=0;
-		int operatorFlag=0;
-		int finishbracket=0;
+		int formerMinusFlag=0;	
+		int minusToBracket=0;	
+		int loopCounter=0;
 		int arrayreferFlagRightNotOperate=0;
 		int arrayreferFlagRightNotOperateFlag=0;
 		int arrayreferFlagRightFlag=0;
+		if (str[1].equals("SMINUS")) {	
+			minusToBracket=1;	
+			}
+		
 		while (scanner.hasNextLine()) {
+			loopCounter++;
 			arrayreferFlagRightNotOperateFlag=0;
 
 			if (str[1].equals("SLPAREN") || (str[1].equals("SLBRACKET"))) {
 				if (conditionalFlag==1)Operatorlist.add(str[0].toUpperCase());
 				while (true) {
 					flag = 1;	
-
+					if (minusToBracket==1 && loopCounter==2) {	
+						push0ForMinus(minusFlag);	
+						}	
+						formerMinusFlag=minusFlag;	
+						minusFlag=0;
 					if (Brackets(scanner)) {	
 						if((str[1].equals("SRBRACKET")))	{
 							arrayreferFlagRight=0;
 						}
+						minusFlag=formerMinusFlag;
 
 						str = scanner.nextLine().split("\t");		
 
@@ -667,6 +686,11 @@ public class Compiler {
 					&& (str[1].equals("SSEMICOLON") || (str[1].equals("SRPAREN")) || (str[1].equals("SRBRACKET")))) {
 
 				if (str[1].equals("SSEMICOLON") || (str[1].equals("SRPAREN"))){
+					//add	
+					//if (formerOperatortype!=0 & formerOperatortype!=operatortype) {	
+					//changeResult(operatortype, minusFlag);	
+					//}	
+					//add
 					if (formerOperatortype==0) changeResult(operatortype, minusFlag); 
 					else changeResult(formerOperatortype, minusFlag); 
 					arrayreferFlagRight=0;
@@ -1925,6 +1949,7 @@ public class Compiler {
 
 	public boolean SWRITELN(Scanner scanner) {
 		int block = 0;
+		String temp="";
 		str = scanner.nextLine().split("\t");
 		if (str[1].equals("SLPAREN")) {
 			str = scanner.nextLine().split("\t");
@@ -2002,7 +2027,7 @@ public class Compiler {
 					}
 
 					else if (str[1].equals("SIDENTIFIER")) {
-
+						temp = varTypeCheck(str[0]);
 						if (!arrayCheck(str[0])) {
 							int tempPoint=0;
 							if (scope.equals("global")) {
@@ -2066,7 +2091,7 @@ public class Compiler {
 								sbForProc.append("GR2" + "\n");
 							}
 
-							String temp = varTypeCheck(str[0]);
+							temp = varTypeCheck(str[0]);
 							if (temp == null)
 								//temp = variable[varStackPoint][2];
 								temp = variable[tempPoint][2];
@@ -2152,8 +2177,16 @@ public class Compiler {
 								sb.append("\t" + "POP" + "\t");
 								sb.append("GR2" + "\n");
 
-								sb.append("\t" + "CALL" + "\t");
-								sb.append("WRTINT" + "\n");
+								if (temp != null) {	
+									if (temp.equals("integer")) {	
+										sb.append("\t" + "CALL" + "\t");	
+										sb.append("WRTINT" + "\n");	
+									}	
+									else if (temp.equals("char")) {	
+										sb.append("\t" + "CALL" + "\t");	
+										sb.append("WRTCH" + "\n");	
+									} else {}	
+								}
 							}
 							else {
 								sbForProc.append("\t" + "LD" + "\t");
@@ -2168,8 +2201,17 @@ public class Compiler {
 								sbForProc.append("\t" + "POP" + "\t");
 								sbForProc.append("GR2" + "\n");
 
-								sbForProc.append("\t" + "CALL" + "\t");
-								sbForProc.append("WRTINT" + "\n");
+								if (temp != null) {	
+									if (temp.equals("integer")) {	
+										sbForProc.append("\t" + "CALL" + "\t");	
+										sbForProc.append("WRTINT" + "\n");	
+									}	
+									else if (temp.equals("char")) {	
+										sbForProc.append("\t" + "CALL" + "\t");	
+										sbForProc.append("WRTCH" + "\n");	
+									} else {}	
+								}	
+
 							}
 						}
 						block = 0;
@@ -2189,8 +2231,17 @@ public class Compiler {
 								sb.append("\t" + "POP" + "\t");
 								sb.append("GR2" + "\n");
 
-								sb.append("\t" + "CALL" + "\t");
-								sb.append("WRTINT" + "\n");
+								if (temp != null) {	
+									if (temp.equals("integer")) {	
+										sb.append("\t" + "CALL" + "\t");	
+										sb.append("WRTINT" + "\n");	
+									}	
+									else if (temp.equals("char")) {	
+										sb.append("\t" + "CALL" + "\t");	
+										sb.append("WRTCH" + "\n");	
+									} else {}	
+								}	
+
 
 							} else {
 								sbForProc.append("\t" + "LD" + "\t");
@@ -2205,9 +2256,18 @@ public class Compiler {
 								sbForProc.append("\t" + "POP" + "\t");
 								sbForProc.append("GR2" + "\n");
 
-								sbForProc.append("\t" + "CALL" + "\t");
-								sbForProc.append("WRTINT" + "\n");
+								if (temp != null) {	
+									if (temp.equals("integer")) {	
+										sbForProc.append("\t" + "CALL" + "\t");	
+										sbForProc.append("WRTINT" + "\n");	
+									}	
+									else if (temp.equals("char")) {	
+										sbForProc.append("\t" + "CALL" + "\t");	
+										sbForProc.append("WRTCH" + "\n");	
+									} else {}	
+								}	
 							}
+
 						}
 						if (scope.equals("global")) {
 							sb.append("\t" + "CALL" + "\t");
@@ -2289,6 +2349,12 @@ public class Compiler {
 					return variable[i][2];
 				}
 			}
+			else if (!scope.equals("global") & variable[i][0].equals("global")	
+					& str[0].equals(variable[i][1])){	
+				if (variable[i][1].equals(varName)) {	
+					return variable[i][2];	
+				}	
+			}
 		}
 		return null;
 	}
@@ -2351,29 +2417,32 @@ public class Compiler {
 		return count;
 	}
 
+	void push0ForMinus(int minusFlag) {
+		if (minusFlag == 1) {
+
+			if (scope.equals("global")) {
+				if (sassignFlag == 1 || procflag==1 || conditionalFlag==1) {
+					sb.append("\t" + "PUSH" + "\t");
+					sb.append("0;" + "\n");
+				}
+				else {
+					sbsub.append("\t" + "PUSH" + "\t");
+					sbsub.append("0;" + "\n");
+				}
+
+			} else {
+				sbForProc.append("\t" + "PUSH" + "\t");
+				sbForProc.append("0;changeResult" + "\n");
+			}
+		}
+		return;
+	}
+
 	void changeResult(int operatortype,int minusFlag) {
 		int kjll=0;
 		int temp = 0;
 		if (str[1].equals("SIDENTIFIER")) {
-
-			if (minusFlag == 1) {
-
-				if (scope.equals("global")) {
-					if (sassignFlag == 1 || procflag==1 || conditionalFlag==1) {
-						sb.append("\t" + "PUSH" + "\t");
-						sb.append("0;" + "\n");
-					}
-					else {
-						sbsub.append("\t" + "PUSH" + "\t");
-						sbsub.append("0;" + "\n");
-					}
-
-				} else {
-					sbForProc.append("\t" + "PUSH" + "\t");
-					sbForProc.append("0;changeResult" + "\n");
-				}
-			}
-
+			push0ForMinus(minusFlag);
 			for (int i = 0; variable[i][0] != null; i++) {
 				if (scope.equals(variable[i][0]) & str[0].equals(variable[i][1])) {
 					if (sassignFlag == 1 || procflag==1 || conditionalFlag==1) {
@@ -2507,16 +2576,7 @@ public class Compiler {
 		}
 
 		else  if (str[1].equals("SCONSTANT")){
-			if (minusFlag == 1) {
-				if (scope.equals("global")) {
-					sb.append("\t" + "PUSH" + "\t");
-					sb.append("0;changeResult" + "\n");
-				} else {
-					sbForProc.append("\t" + "PUSH" + "\t");
-					sbForProc.append("0" + "\n");
-				}
-			}
-
+			push0ForMinus(minusFlag);
 			temp = Integer.parseInt(str[0]);
 			if (scope.equals("global")) {
 

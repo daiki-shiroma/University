@@ -56,7 +56,7 @@ public class Compiler {
 
 	public static void main(final String[] args) {
 		// Compilerを実行してcasを生成する
-		new Compiler().run("data/ts/normal12.ts", "tmp/out.cas");
+		new Compiler().run("data/ts/normal16.ts", "tmp/out.cas");
 
 		// 上記casを，CASLアセンブラ & COMETシミュレータで実行する
 		CaslSimulator.run("tmp/out.cas", "tmp/out.ans");
@@ -686,10 +686,12 @@ public class Compiler {
 					&& (str[1].equals("SSEMICOLON") || (str[1].equals("SRPAREN")) || (str[1].equals("SRBRACKET")))) {
 
 				if (str[1].equals("SSEMICOLON") || (str[1].equals("SRPAREN"))){
-					//add	
-					//if (formerOperatortype!=0 & formerOperatortype!=operatortype) {	
-					//changeResult(operatortype, minusFlag);	
-					//}	
+					//add
+					if (str[1].equals("SRPAREN")) {
+						if (formerOperatortype!=0 & formerOperatortype!=operatortype) {	
+							changeResult(operatortype, minusFlag);	
+							}	
+					}
 					//add
 					if (formerOperatortype==0) changeResult(operatortype, minusFlag); 
 					else changeResult(formerOperatortype, minusFlag); 

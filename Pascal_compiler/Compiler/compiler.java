@@ -1855,11 +1855,9 @@ public class Compiler {
 		sbForScope.append("\tPOP" + "\tGR1\n");
 		sbForScope.append("\t" + type + "\tGR1,\t"+"GR2\n");
 		sbForScope.append("\tPUSH" + "\t0,"+"\tGR1\n");
-		if (count>0) {
-			sbForScope.append("\tPOP" + "\tGR1\n");
-			sbForScope.append("\tCPA" + "\tGR1,"+"\t=#FFFF\n");
-			sbForScope.append("\tJZE" + "\tELSE"+count+"\n");
-		}
+		if (count>0) 
+			conditionalFinish(count);
+		
 		selectStringbuilder ();
 		return;
 	}
@@ -1868,19 +1866,18 @@ public class Compiler {
 		sbForScope.append("\tPOP" + "\tGR1" +"\n");
 		sbForScope.append("\tXOR" + "\tGR1, "+"\t=#FFFF\n");
 		sbForScope.append("\tPUSH" + "\t0,"+"\tGR1\n");
-		if (count>0) {
-			sbForScope.append("\tPOP" + "\tGR1\n");
-			sbForScope.append("\tCPA" + "\tGR1,"+"\t=#FFFF\n");
-			sbForScope.append("\tJZE" + "\tELSE"+count+"\n");
-		}
+		if (count>0) 
+			conditionalFinish(count);
+		
 		selectStringbuilder ();
 		return; 
 	}
 
 	void conditionalFinish(int count) {
-		sb.append("\tPOP" + "\tGR1" +"\n");
-		sb.append("\tCPA" + "\tGR1,"+"\t=#FFFF"+"\n");
-		sb.append("\tJZE" + "\tELSE"+count+"\n");
+		sbForScope.append("\tPOP" + "\tGR1" +"\n");
+		sbForScope.append("\tCPA" + "\tGR1,"+"\t=#FFFF"+"\n");
+		sbForScope.append("\tJZE" + "\tELSE"+count+"\n");
+		selectStringbuilder ();
 	}
 
 	void changeArgument() {

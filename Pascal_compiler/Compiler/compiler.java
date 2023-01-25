@@ -524,10 +524,10 @@ public class Compiler {
 						if(arrayreferFlagRightNotOperate==1 && count>1 ) {
 							arrayreferFlagRightNotOperateFlag=1;
 							if (operatortype>=3) {
-								changeResult(operatortype, minusFlag); 
+								addAndRenewOperandStack(operatortype, minusFlag); 
 							}
 							else {
-								changeResult(formerOperatortype, minusFlag); 
+								addAndRenewOperandStack(formerOperatortype, minusFlag); 
 								formerOperatortype=operatortype;
 							}
 							arrayreferFlagRightNotOperate=0;
@@ -551,11 +551,11 @@ public class Compiler {
 				if (str[1].equals("SSEMICOLON") || (str[1].equals("SRPAREN"))){
 					if (str[1].equals("SRPAREN")) {
 						if (formerOperatortype!=0 & formerOperatortype!=operatortype) {	
-							changeResult(operatortype, minusFlag);	
+							addAndRenewOperandStack(operatortype, minusFlag);	
 						}	
 					}
-					if (formerOperatortype==0) changeResult(operatortype, minusFlag); 
-					else changeResult(formerOperatortype, minusFlag); 
+					if (formerOperatortype==0) addAndRenewOperandStack(operatortype, minusFlag); 
+					else addAndRenewOperandStack(formerOperatortype, minusFlag); 
 					arrayreferFlagRight=0;
 				}
 				if (str[1].equals("SRBRACKET")) 	
@@ -566,13 +566,13 @@ public class Compiler {
 			if (str[1].equals("SCONSTANT")) {
 
 				if (operatortype==0) 
-					changeResult(operatortype, minusFlag); 
+					addAndRenewOperandStack(operatortype, minusFlag); 
 
 				else if (operatortype==formerOperatortype & operatortype > 0) 
-					changeResult(0, minusFlag); 
+					addAndRenewOperandStack(0, minusFlag); 
 
 				else if (operatortype>=3) 
-					changeResult(operatortype, minusFlag); 
+					addAndRenewOperandStack(operatortype, minusFlag); 
 
 				integerType = 1;
 				if ((integerType + charType + stringType + booleanType) > 1) {
@@ -585,9 +585,9 @@ public class Compiler {
 				minusFlag = 2;
 				if (str[1].equals("SSEMICOLON") || (str[1].equals("SRPAREN")) || (str[1].equals("SRBRACKET"))) {
 					if (formerOperatortype==0) 
-						changeResult(operatortype, minusFlag); 
+						addAndRenewOperandStack(operatortype, minusFlag); 
 					else 
-						changeResult(formerOperatortype, minusFlag); 
+						addAndRenewOperandStack(formerOperatortype, minusFlag); 
 
 					minusFlag=0;
 					return true;
@@ -607,13 +607,13 @@ public class Compiler {
 				if (arrayreferFlagRight==0) {
 
 					if (operatortype==0) 
-						changeResult(operatortype, minusFlag); 
+						addAndRenewOperandStack(operatortype, minusFlag); 
 
 					else if (operatortype==formerOperatortype & operatortype > 0) 	
-						changeResult(0, minusFlag); 
+						addAndRenewOperandStack(0, minusFlag); 
 
 					else if (operatortype==3 || operatortype== 4) 
-						changeResult(operatortype, minusFlag); 
+						addAndRenewOperandStack(operatortype, minusFlag); 
 				}
 				else arrayreferFlagRightNotOperate=1;
 
@@ -653,9 +653,9 @@ public class Compiler {
 					}	
 
 					if (formerOperatortype==0) 
-						changeResult(operatortype, minusFlag); 
+						addAndRenewOperandStack(operatortype, minusFlag); 
 					else 
-						changeResult(formerOperatortype, minusFlag); 
+						addAndRenewOperandStack(formerOperatortype, minusFlag); 
 					minusFlag=0;
 					return true;
 				}
@@ -663,7 +663,7 @@ public class Compiler {
 
 			else if (str[1].equals("SSTRING")) {
 				if (conditionalFlag==1) 
-					changeResult(0, minusFlag);
+					addAndRenewOperandStack(0, minusFlag);
 				stringType = 1;
 				if ((integerType + charType + stringType + booleanType) > 1) {
 					errorType = 1;
@@ -728,7 +728,7 @@ public class Compiler {
 						operatortype = 2;
 					if (minusFlag == 0) minusFlag = 1;
 
-					if (formerOperatortype>0 && arrayreferFlagRightNotOperateFlag==0) changeResult(formerOperatortype,minusFlag); 
+					if (formerOperatortype>0 && arrayreferFlagRightNotOperateFlag==0) addAndRenewOperandStack(formerOperatortype,minusFlag); 
 					formerOperatortype=operatortype;
 				}
 
@@ -744,7 +744,7 @@ public class Compiler {
 
 					if (formerOperatortype==0) formerOperatortype=operatortype;
 					else if (formerOperatortype>2 && arrayreferFlagRightNotOperateFlag==0) {
-						changeResult(formerOperatortype,minusFlag); 
+						addAndRenewOperandStack(formerOperatortype,minusFlag); 
 						formerOperatortype=operatortype;
 					}
 				}
@@ -767,7 +767,7 @@ public class Compiler {
 		if (str[1].equals("SEQUAL") || str[1].equals("SNOTEQUAL") || str[1].equals("SLESS")
 				|| str[1].equals("SLESSEQUAL") || str[1].equals("SGREATEQUAL") || str[1].equals("SGREAT")) {
 
-			changeResult(operatortype, minusFlag); 
+			addAndRenewOperandStack(operatortype, minusFlag); 
 
 			inputcomparisonOperator();
 
@@ -785,7 +785,7 @@ public class Compiler {
 		}
 
 		if (str[1].equals("STHEN") || str[1].equals("SDO")) {
-			changeResult(operatortype, minusFlag); 
+			addAndRenewOperandStack(operatortype, minusFlag); 
 			this.booleanType = booleanType;
 			arrayreferFlagRight=0;
 			return true;
@@ -905,7 +905,7 @@ public class Compiler {
 				}
 
 				else 
-					changeResult(0,0);
+					addAndRenewOperandStack(0,0);
 
 				str = scanner.nextLine().split("\t"); 
 
@@ -1684,7 +1684,7 @@ public class Compiler {
 		return;
 	}
 
-	void changeResult(int operatortype,int minusFlag) {
+	void addAndRenewOperandStack(int operatortype,int minusFlag) {
 		if (str[1].equals("SIDENTIFIER")) {
 			push0ForMinus(minusFlag);
 

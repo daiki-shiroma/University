@@ -771,17 +771,11 @@ public class Compiler {
 
 			inputcomparisonOperator();
 
-			if (notflag == 1) {
-				sbForScope.append("\t" + "POP" + "\t"+"GR1" + "\n");
-				sbForScope.append("\t" + "XOR" + "\t"+"GR1," + "\t"+"=#FFFF" + "\n");
-				sbForScope.append("\t" + "PUSH" + "\t"+"0," + "\t"+"GR1" + "\n");
-				selectStringbuilder();
-			}
-
+			if (notflag == 1) notOperator(0);
+				
 			notflag = 0;
 			arrayreferFlagRight=0;
 			return true;
-
 		}
 
 		if (str[1].equals("STHEN") || str[1].equals("SDO")) {
@@ -1163,7 +1157,7 @@ public class Compiler {
 
 			if (brflag > 0 && (str[1].equals("SRPAREN"))) {
 				str = scanner.nextLine().split("\t");
-				
+
 				if (Operatorlist.size()>0) {
 					selectLogicalOperator(Operatorlist.get(Operatorlist.size()-1),-1);
 					if (Operatorlist.size()>0)Operatorlist.remove(Operatorlist.size()-1);
@@ -1857,18 +1851,18 @@ public class Compiler {
 		sbForScope.append("\tPUSH" + "\t0,"+"\tGR1\n");
 		if (count>0) 
 			conditionalFinish(count);
-		
+
 		selectStringbuilder ();
 		return;
 	}
 
-	void notOperator(int count) {
+	void notOperator(int count) { 
 		sbForScope.append("\tPOP" + "\tGR1" +"\n");
 		sbForScope.append("\tXOR" + "\tGR1, "+"\t=#FFFF\n");
 		sbForScope.append("\tPUSH" + "\t0,"+"\tGR1\n");
 		if (count>0) 
 			conditionalFinish(count);
-		
+
 		selectStringbuilder ();
 		return; 
 	}

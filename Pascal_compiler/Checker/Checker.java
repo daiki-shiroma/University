@@ -13,7 +13,7 @@ public class Checker {
 	int errorType=0;
 	int booleanType=0;
 	public static void main(final String[] args) {
-		new Checker().run("data/ts/semerr04.ts");
+		new Checker().run("data/ts/normal13.ts");
 	}
 
 	public void run(final String inputFileName) {
@@ -238,7 +238,6 @@ public class Checker {
 			if (procedureCheck(temp))return true;
 			else errorType=1;
 		}
-
 		return false;	
 	}
 
@@ -284,7 +283,7 @@ public class Checker {
 				if (temp!=null) {
 					if (temp.equals("integer"))integerType=1;
 					else if(temp.equals("char"))charType=1;
-					else if(temp.equals("string"))stringType=1;
+					//else if(temp.equals("string"))stringType=1;
 					else if(temp.equals("boolean")) {
 						booleanType=1;
 						this.booleanType=1;

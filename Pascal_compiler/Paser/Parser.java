@@ -1,13 +1,11 @@
 package enshud.s2.parser;
 import java.util.*;
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 
 public class Parser {
 	String[] str= {};
-
+	String scope="global";
 	public static void main(final String[] args) {
 		new Parser().run("data/ts/normal12.ts");
 	}
@@ -34,7 +32,7 @@ public class Parser {
 								if(!SVAR(scanner)) break;
 							}
 							if (str[1].equals("SIDENTIFIER")) {
-								if(!SIDENTIFIER(scanner))break;
+								if(!SIDENTIFIER(scanner, scope))break;
 							}
 							if (str[1].equals("SWRITELN")) {
 								if(!SWRITELN(scanner))break;
@@ -66,12 +64,23 @@ public class Parser {
 	public boolean SVAR(Scanner scanner) {
 		str = scanner.nextLine().split("\t");
 		if (str[1].equals("SIDENTIFIER")) { 
-			if(SIDENTIFIER(scanner)) return true;
+			if(SIDENTIFIER(scanner,scope)) 
+				return true;
 		}
 		return false;	
 	}
+	
+//	public boolean SVAR(Scanner scanner) {
+//		str = scanner.nextLine().split("\t");
+//		if (str[1].equals("SIDENTIFIER")) {
+//			if (SIDENTIFIER(scanner, scope)) {
+//				return true;
+//			}
+//		}
+//		return false;
+//	}
 
-	public boolean SIDENTIFIER(Scanner scanner) {
+	public boolean SIDENTIFIER(Scanner scanner, String scope) {
 		int flag=0;
 		str = scanner.nextLine().split("\t");
 
@@ -352,7 +361,7 @@ public class Parser {
 					}
 					
 					if (str[1].equals("SIDENTIFIER")) {
-						if (!SIDENTIFIER(scanner)) return false; 
+						if (!SIDENTIFIER(scanner,scope)) return false; 
 					}
 
 					if (str[1].equals("SEND")) {
@@ -389,7 +398,7 @@ public class Parser {
 					}
 					
 					if (str[1].equals("SIDENTIFIER")) {
-						if (!SIDENTIFIER(scanner)) return false; 
+						if (!SIDENTIFIER(scanner,scope)) return false; 
 					}
 
 					if (str[1].equals("SEND")) {
@@ -419,7 +428,7 @@ public class Parser {
 							}
 
 							if (str[1].equals("SIDENTIFIER")) {
-								if (!SIDENTIFIER(scanner)) return false; 
+								if (!SIDENTIFIER(scanner,scope)) return false; 
 							}
 
 							if (str[1].equals("SEND")) {
